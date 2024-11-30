@@ -1,0 +1,13 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    url: "${PROFILE_DB_URL}"
+    username: "${PROFILE_DB_USERNAME}"
+    password: "${PROFILE_DB_PASSWORD}"
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
