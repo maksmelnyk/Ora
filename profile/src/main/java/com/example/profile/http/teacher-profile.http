@@ -1,0 +1,22 @@
+@base_url = http://localhost:8082/api/v1/teacher-profiles
+
+###
+GET {{base_url}}/{id}
+
+###
+POST {{base_url}}/{userProfileId}
+Content-Type: application/json
+
+{
+    "bio": "test-bio",
+    "experience": "test-experience"
+}
+
+###
+PUT {{base_url}}/{id}
+Content-Type: application/json
+
+{
+    "bio": "test-bio-updated",
+    "experience": "test-experience-updated"
+}
