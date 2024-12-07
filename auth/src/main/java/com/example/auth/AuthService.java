@@ -13,7 +13,7 @@ import lombok.AllArgsConstructor;
 public class AuthService {
     private final KeycloakClient keycloakClient;
 
-    public Map<String, Object> registerUser(RegisterRequest request) {
+    public Map<String, Object> register(RegisterRequest request) {
         keycloakClient.registerUser(request);
         return keycloakClient.loginUser(request.email(), request.password());
     }
