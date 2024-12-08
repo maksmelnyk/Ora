@@ -1,4 +1,4 @@
-package com.example.auth.exception;
+package com.example.profile.exception;
 
 public class ValidationException extends RuntimeException {
     private final String errorCode;

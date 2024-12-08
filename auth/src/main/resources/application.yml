@@ -1,11 +1,31 @@
 server:
   port: 8081
 
-keycloak:
-  url: "${KEYCLOAK_URL}"
-  realm: "${KEYCLOAK_REALM}"
-  clientId: "${KEYCLOAK_AUTH_CLIENT_ID}"
-  clientSecret: "${KEYCLOAK_AUTH_CLIENT_SECRET}"
-  adminClientId: "${KEYCLOAK_ADMIN_CLIENT_ID}"
-  adminUsername: "${KEYCLOAK_ADMIN_USER}"
-  adminPassword: "${KEYCLOAK_ADMIN_PASSWORD}"
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: "${RABBITMQ_DEFAULT_USER}"
+    password: "${RABBITMQ_DEFAULT_PASS}"
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 1.0
+          max-interval: 10000
+app:
+  keycloak:
+    url: "${KEYCLOAK_URL}"
+    realm: "${KEYCLOAK_REALM}"
+    clientId: "${KEYCLOAK_AUTH_CLIENT_ID}"
+    clientSecret: "${KEYCLOAK_AUTH_CLIENT_SECRET}"
+    adminClientId: "${KEYCLOAK_ADMIN_CLIENT_ID}"
+    adminUsername: "${KEYCLOAK_ADMIN_USER}"
+    adminPassword: "${KEYCLOAK_ADMIN_PASSWORD}"
+  rabbitmq:
+    userExchange: "${USER_CREATION_EXCHANGE}"
+    userCreatedRoutingKey: "${USER_CREATED_ROUTING_KEY}"
+    userCreatedQueue: "${USER_CREATED_QUEUE}"
+    userResponseQueue: "${USER_RESPONSE_QUEUE}"

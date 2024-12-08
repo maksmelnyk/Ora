@@ -1,16 +1,44 @@
 package com.example.profile.handler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.example.profile.exception.ResourceExistsException;
 import com.example.profile.exception.ResourceNotFoundException;
+import com.example.profile.exception.ValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ResourceExistsException.class)
+    public ResponseEntity<Map<String, String>> handleResourceExistsException(ResourceExistsException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
+        return buildErrorResponse("An unexpected error occurred", "INTERNAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private ResponseEntity<Map<String, String>> buildErrorResponse(String message, String errorCode,
+            HttpStatus status) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", message);
+        errorResponse.put("code", errorCode);
+        return new ResponseEntity<>(errorResponse, status);
     }
 }

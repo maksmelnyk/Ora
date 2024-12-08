@@ -9,7 +9,8 @@ Content-Type: application/json
     "firstName": "first-name",
     "lastName": "last-name",
     "email": "email@gmali.com",
-    "password": "password"
+    "password": "password",
+    "birthDate": "2000-01-01"
 }
 
 ###

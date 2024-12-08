@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "keycloak")
+@ConfigurationProperties(prefix = "app.keycloak")
 public class KeycloakProperties {
     private String url;
     private String realm;
