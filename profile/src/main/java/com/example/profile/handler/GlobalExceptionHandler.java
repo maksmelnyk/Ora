@@ -1,16 +1,13 @@
 package com.example.profile.handler;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.example.profile.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.example.profile.exception.ResourceExistsException;
-import com.example.profile.exception.ResourceNotFoundException;
-import com.example.profile.exception.ValidationException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,9 +21,19 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ResourceNotCreatedException.class)
+    public ResponseEntity<Map<String, String>> handleResourceNotCreatedException(ResourceNotCreatedException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
         return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserNotAuthenticatedException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotAuthenticatedException(UserNotAuthenticatedException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)
@@ -35,7 +42,7 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, String>> buildErrorResponse(String message, String errorCode,
-            HttpStatus status) {
+                                                                   HttpStatus status) {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("message", message);
         errorResponse.put("code", errorCode);

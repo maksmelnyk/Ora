@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.example.profile.exception.ErrorCodes;
 import com.example.profile.exception.ResourceNotFoundException;
@@ -28,13 +29,16 @@ public class UserProfileServiceTest {
     @Mock
     private UserProfileRepository repository;
 
+    @Mock
+    private CurrentUser currentUser;
+
     private UserProfileMapper mapper;
     private UserProfileService service;
 
     @BeforeEach
     void setUp() {
         mapper = new UserProfileMapper();
-        service = new UserProfileService(repository, mapper);
+        service = new UserProfileService(repository, mapper, currentUser);
     }
 
     @Test
@@ -75,23 +79,11 @@ public class UserProfileServiceTest {
     }
 
     @Test
-    void createUserProfile_ShouldSaveProfile() {
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("first-name", "last-name",
-                LocalDate.of(2000, 1, 1));
-
-        UserProfile userProfile = mapper.toUserProfile(request);
-
-        service.createUserProfile(request);
-
-        verify(repository, times(1)).save(userProfile);
-    }
-
-    @Test
     void updateUserProfile_ShouldUpdateProfile_WhenProfileExists() {
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
 
         UserProfile profile = UserProfile.builder()
-                .id(userId)
+                .userId(userId)
                 .firstName("old-first-name")
                 .lastName("old-last-name")
                 .birthDate(LocalDate.of(1990, 1, 1))
@@ -100,32 +92,35 @@ public class UserProfileServiceTest {
         UpdateUserProfileRequest request = new UpdateUserProfileRequest(
                 "new-first-name", "new-last-name", LocalDate.of(2000, 1, 1));
 
-        when(repository.findById(userId)).thenReturn(Optional.of(profile));
+        when(currentUser.getUserId()).thenReturn(userId);
+        when(repository.findByUserId(userId)).thenReturn(Optional.of(profile));
 
-        service.updateUserProfile(userId, request);
+        service.updateUserProfile(request);
 
         assertEquals(request.firstName(), profile.getFirstName());
         assertEquals(request.lastName(), profile.getLastName());
         assertEquals(request.birthDate(), profile.getBirthDate());
 
-        verify(repository, times(1)).findById(userId);
+        verify(repository, times(1)).findByUserId(userId);
         verify(repository, times(1)).save(profile);
     }
 
     @Test
     void updateUserProfile_ShouldThrowException_WhenProfileDoesNotExist() {
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
+
         UpdateUserProfileRequest request = new UpdateUserProfileRequest("first-name", "last-name",
                 LocalDate.of(2000, 1, 1));
 
-        when(repository.findById(userId)).thenReturn(Optional.empty());
+        when(currentUser.getUserId()).thenReturn(userId);
+        when(repository.findByUserId(userId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> service.updateUserProfile(userId, request));
+                () -> service.updateUserProfile(request));
 
         assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getErrorCode());
-        verify(repository, times(1)).findById(userId);
+        verify(repository, times(1)).findByUserId(userId);
         verify(repository, never()).save(any());
     }
 }

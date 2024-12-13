@@ -1,34 +1,32 @@
 package com.example.auth.rabbitmq;
 
+import com.example.auth.exception.AuthenticationException;
+import com.example.auth.exception.ErrorCodes;
+import com.example.auth.rabbitmq.UserCreatedEvent.UserCreationStatus;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
-import com.example.auth.exception.AuthenticationException;
-import com.example.auth.exception.ErrorCodes;
-import com.example.auth.rabbitmq.UserCreationEvent.UserCreationStatus;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.AllArgsConstructor;
-
 @Service
 @AllArgsConstructor
-public class UserPublisherService {
-    private final RabbitTemplate rabbitTemplate;
+public class UserCreatedEventPublisher {
+    private final RabbitTemplate template;
     private final RabbitMQProperties properties;
     private final ObjectMapper objectMapper;
 
-    public UserCreationStatus createUserWithValidation(UserCreationEvent event) {
+    public UserCreationStatus publishUserCreationEvent(UserCreatedEvent event) {
         try {
-            String eventJson = objectMapper.writeValueAsString(event);
-            String responseJson = (String) rabbitTemplate.convertSendAndReceive(
-                    properties.getUserExchange(),
-                    properties.getUserCreatedRoutingKey(),
+            String eventJson = this.objectMapper.writeValueAsString(event);
+            String responseJson = (String) this.template.convertSendAndReceive(
+                    this.properties.getUserExchange(),
+                    this.properties.getUserCreatedRoutingKey(),
                     eventJson);
             if (responseJson == null) {
                 throw new AuthenticationException("Error during user login", ErrorCodes.USER_ROLE_ASSIGNMENT_FAILED);
             }
 
-            UserCreationEvent responseEvent = objectMapper.readValue(responseJson, UserCreationEvent.class);
+            UserCreatedEvent responseEvent = this.objectMapper.readValue(responseJson, UserCreatedEvent.class);
             return responseEvent.getStatus();
 
         } catch (Exception e) {

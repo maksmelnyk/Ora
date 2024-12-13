@@ -1,29 +1,29 @@
 package com.example.auth.rabbitmq;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreationEvent implements Serializable {
+public class UserCreatedEvent implements Serializable {
     @Builder.Default
-    private String eventId = UUID.randomUUID().toString();
+    private final String eventId = UUID.randomUUID().toString();
 
-    private String userId;
+    private UUID userId;
     private String firstName;
     private String lastName;
     private LocalDate birthDate;
 
     @Builder.Default
-    private UserCreationStatus status = UserCreationStatus.PENDING;
+    private final UserCreationStatus status = UserCreationStatus.PENDING;
 
     private String errorMessage;
 

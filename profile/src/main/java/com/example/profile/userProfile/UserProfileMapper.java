@@ -1,30 +1,17 @@
 package com.example.profile.userProfile;
 
+import com.example.profile.rabbitmq.UserCreatedEvent;
 import org.springframework.stereotype.Component;
-
-import com.example.profile.rabbitmq.UserCreationEvent;
 
 @Component
 public class UserProfileMapper {
-    public UserProfile toUserProfile(UpdateUserProfileRequest request) {
+    public UserProfile toUserProfile(UserCreatedEvent request) {
         if (request == null) {
             return null;
         }
 
         return UserProfile.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .birthDate(request.birthDate())
-                .build();
-    }
-
-    public UserProfile toUserProfile(UserCreationEvent request) {
-        if (request == null) {
-            return null;
-        }
-
-        return UserProfile.builder()
-                .identityId(request.getUserId())
+                .userId(request.getUserId())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .birthDate(request.getBirthDate())

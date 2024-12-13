@@ -1,30 +1,25 @@
 package com.example.auth.keycloak;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
+import com.example.auth.exception.AuthenticationException;
+import com.example.auth.exception.ErrorCodes;
+import com.example.auth.exception.ValidationException;
+import jakarta.ws.rs.core.Response;
+import lombok.AllArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import com.example.auth.exception.AuthenticationException;
-import com.example.auth.exception.ErrorCodes;
-import com.example.auth.exception.ValidationException;
-
-import jakarta.ws.rs.core.Response;
-import lombok.AllArgsConstructor;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -32,9 +27,9 @@ public class KeycloakClient {
 
     private final Keycloak keycloak;
     private final KeycloakProperties properties;
-    private final RestTemplate restTemplate;
+    private final RestTemplate template;
 
-    public String registerUser(String username, String email, String password) {
+    public UUID registerUser(String username, String email, String password) {
         if (isEmailExists(email)) {
             throw new ValidationException("Email already exists", ErrorCodes.EMAIL_ALREADY_EXISTS);
         }
@@ -45,7 +40,7 @@ public class KeycloakClient {
 
         UserRepresentation user = createUserRepresentation(username, email, password);
 
-        Response response = keycloak.realm(properties.getRealm()).users().create(user);
+        Response response = this.keycloak.realm(this.properties.getRealm()).users().create(user);
         if (response.getStatus() != HttpStatus.CREATED.value()) {
             throw new AuthenticationException("Failed to create user", ErrorCodes.USER_CREATION_FAILED);
         }
@@ -54,27 +49,42 @@ public class KeycloakClient {
 
         assignRoleToUser(userId, KeycloakRole.USER);
 
-        return userId;
+        return UUID.fromString(userId);
     }
 
-    public void deleteUser(String userId) {
-        UserResource userResource = keycloak.realm(properties.getRealm()).users().get(userId);
-        
-        if(userResource != null){
+    public void assignRoleToUser(String userId, String roleName) {
+        try {
+            RoleRepresentation role = this.keycloak.realm(this.properties.getRealm()).roles().get(roleName).toRepresentation();
+
+            this.keycloak.realm(this.properties.getRealm())
+                    .users()
+                    .get(userId)
+                    .roles()
+                    .realmLevel()
+                    .add(Collections.singletonList(role));
+        } catch (Exception e) {
+            throw new AuthenticationException("Failed to assign user role", ErrorCodes.USER_ROLE_ASSIGNMENT_FAILED, e);
+        }
+    }
+
+    public void deleteUser(UUID userId) {
+        UserResource userResource = this.keycloak.realm(this.properties.getRealm()).users().get(userId.toString());
+
+        if (userResource != null) {
             userResource.remove();
         }
     }
 
     public Map<String, Object> loginUser(String username, String password) {
-        String url = String.format("%s/realms/%s/protocol/openid-connect/token", properties.getUrl(),
-                properties.getRealm());
+        String url = String.format("%s/realms/%s/protocol/openid-connect/token", this.properties.getUrl(),
+                this.properties.getRealm());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("client_id", properties.getClientId());
-        form.add("client_secret", properties.getClientSecret());
+        form.add("client_id", this.properties.getClientId());
+        form.add("client_secret", this.properties.getClientSecret());
         form.add("grant_type", "password");
         form.add("username", username);
         form.add("password", password);
@@ -82,7 +92,7 @@ public class KeycloakClient {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(form, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            ResponseEntity<Map> response = this.template.postForEntity(url, request, Map.class);
 
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new AuthenticationException("Failed to login user", ErrorCodes.USER_LOGIN_FAILED);
@@ -95,7 +105,7 @@ public class KeycloakClient {
     }
 
     private boolean isEmailExists(String email) {
-        List<UserRepresentation> users = keycloak.realm(properties.getRealm())
+        List<UserRepresentation> users = this.keycloak.realm(this.properties.getRealm())
                 .users()
                 .search(null, null, null, email, 0, 1);
 
@@ -103,7 +113,7 @@ public class KeycloakClient {
     }
 
     private boolean isUsernameExists(String username) {
-        List<UserRepresentation> users = keycloak.realm(properties.getRealm())
+        List<UserRepresentation> users = this.keycloak.realm(this.properties.getRealm())
                 .users()
                 .search(username, null, null, null, 0, 1);
 
@@ -130,20 +140,5 @@ public class KeycloakClient {
         return response.getLocation()
                 .getPath()
                 .replaceAll(".*/([^/]+)$", "$1");
-    }
-
-    private void assignRoleToUser(String userId, String roleName) {
-        try {
-            RoleRepresentation role = keycloak.realm(properties.getRealm()).roles().get(roleName).toRepresentation();
-
-            keycloak.realm(properties.getRealm())
-                    .users()
-                    .get(userId)
-                    .roles()
-                    .realmLevel()
-                    .add(Collections.singletonList(role));
-        } catch (Exception e) {
-            throw new AuthenticationException("Failed to assign user role", ErrorCodes.USER_ROLE_ASSIGNMENT_FAILED, e);
-        }
     }
 }

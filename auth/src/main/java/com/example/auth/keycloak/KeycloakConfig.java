@@ -1,25 +1,24 @@
 package com.example.auth.keycloak;
 
+import lombok.AllArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import lombok.AllArgsConstructor;
-
 @Configuration
 @AllArgsConstructor
 public class KeycloakConfig {
-    private final KeycloakProperties keycloakProperties;
+    private final KeycloakProperties properties;
 
     @Bean
     Keycloak keycloakInstance() {
         return KeycloakBuilder.builder()
-                .serverUrl(keycloakProperties.getUrl())
+                .serverUrl(this.properties.getUrl())
                 .realm("master")
-                .clientId(keycloakProperties.getAdminClientId())
-                .username(keycloakProperties.getAdminUsername())
-                .password(keycloakProperties.getAdminPassword())
+                .clientId(this.properties.getAdminClientId())
+                .username(this.properties.getAdminUsername())
+                .password(this.properties.getAdminPassword())
                 .build();
     }
 }

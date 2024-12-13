@@ -1,26 +1,25 @@
 package com.example.auth;
 
-import java.util.Map;
-
+import com.example.auth.keycloak.KeycloakClient;
+import com.example.auth.rabbitmq.UserCreatedEvent;
+import com.example.auth.rabbitmq.UserCreatedEvent.UserCreationStatus;
+import com.example.auth.rabbitmq.UserCreatedEventPublisher;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.example.auth.keycloak.KeycloakClient;
-import com.example.auth.rabbitmq.UserCreationEvent;
-import com.example.auth.rabbitmq.UserCreationEvent.UserCreationStatus;
-import com.example.auth.rabbitmq.UserPublisherService;
-
-import lombok.AllArgsConstructor;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
 public class AuthService {
     private final KeycloakClient keycloakClient;
-    private final UserPublisherService publisherService;
+    private final UserCreatedEventPublisher publisherService;
 
     public Map<String, Object> register(RegisterRequest request) {
-        String userId = keycloakClient.registerUser(request.username(), request.email(), request.password());
+        UUID userId = this.keycloakClient.registerUser(request.username(), request.email(), request.password());
 
-        UserCreationEvent event = UserCreationEvent.builder()
+        UserCreatedEvent event = UserCreatedEvent.builder()
                 .userId(userId)
                 .firstName(request.firstName())
                 .lastName(request.lastName())
@@ -28,15 +27,15 @@ public class AuthService {
                 .build();
 
         try {
-            UserCreationStatus response = publisherService.createUserWithValidation(event);
+            UserCreationStatus response = this.publisherService.publishUserCreationEvent(event);
             if (response != UserCreationStatus.CREATED) {
-                keycloakClient.deleteUser(userId);
+                this.keycloakClient.deleteUser(userId);
             }
         } catch (Exception e) {
-            keycloakClient.deleteUser(userId);
+            this.keycloakClient.deleteUser(userId);
             throw e;
         }
 
-        return keycloakClient.loginUser(request.email(), request.password());
+        return this.keycloakClient.loginUser(request.email(), request.password());
     }
 }
