@@ -15,7 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserCreatedEvent implements Serializable {
     @Builder.Default
-    private final String eventId = UUID.randomUUID().toString();
+    private String eventId = UUID.randomUUID().toString();
 
     private UUID userId;
     private String firstName;
@@ -23,7 +23,7 @@ public class UserCreatedEvent implements Serializable {
     private LocalDate birthDate;
 
     @Builder.Default
-    private final UserCreationStatus status = UserCreationStatus.PENDING;
+    private UserCreationStatus status = UserCreationStatus.PENDING;
 
     private String errorMessage;
 
