@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.profile.exception.ErrorCodes;
 import com.example.profile.exception.ResourceNotFoundException;
+import com.example.profile.rabbitmq.TeacherCreatedEventPublisher;
 import com.example.profile.teacherProfile.TeacherProfile;
 import com.example.profile.teacherProfile.TeacherProfileMapper;
 import com.example.profile.teacherProfile.TeacherProfileRepository;
@@ -22,23 +23,26 @@ import com.example.profile.userProfile.UserProfile;
 import com.example.profile.userProfile.UserProfileRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 class TeacherProfileServiceTest {
 
     @Mock
+    TeacherCreatedEventPublisher publisher;
+    @Mock
     private TeacherProfileRepository teacherRepository;
-
     @Mock
     private UserProfileRepository userRepository;
-
+    @Mock
+    private CurrentUser currentUser;
     private TeacherProfileMapper mapper;
     private TeacherProfileService service;
 
     @BeforeEach
     void setUp() {
         mapper = new TeacherProfileMapper();
-        service = new TeacherProfileService(teacherRepository, userRepository, mapper);
+        service = new TeacherProfileService(currentUser, teacherRepository, userRepository, mapper, publisher);
     }
 
     @Test
@@ -78,9 +82,9 @@ class TeacherProfileServiceTest {
 
     @Test
     void createTeacherProfile_ShouldSaveProfile_WhenUserProfileExists() {
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
 
-        UserProfile profile = UserProfile.builder().id(userId).build();
+        UserProfile profile = UserProfile.builder().userId(userId).build();
 
         UpdateTeacherProfileRequest request = new UpdateTeacherProfileRequest("test-bio", "test-experience");
 
@@ -90,70 +94,74 @@ class TeacherProfileServiceTest {
                 .userProfile(profile)
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(profile));
+        when(currentUser.getUserId()).thenReturn(userId);
+        when(teacherRepository.existsByUserId(userId)).thenReturn(false);
         when(teacherRepository.save(any(TeacherProfile.class))).thenReturn(teacherProfile);
+        when(userRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
 
-        service.createTeacherProfile(userId, request);
+        service.createMyTeacherProfile(request);
 
-        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findByUserId(userId);
         verify(teacherRepository, times(1)).save(any(TeacherProfile.class));
     }
 
     @Test
     void createTeacherProfile_ShouldThrowException_WhenUserProfileDoesNotExist() {
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
 
         UpdateTeacherProfileRequest request = new UpdateTeacherProfileRequest("test-bio", "test-experience");
 
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(currentUser.getUserId()).thenReturn(userId);
+        when(userRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> service.createTeacherProfile(userId, request));
+                () -> service.createMyTeacherProfile(request));
 
         assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getErrorCode());
 
-        verify(userRepository, times(1)).findById(userId);
-        verifyNoInteractions(teacherRepository);
+        verify(userRepository, times(1)).findByUserId(userId);
+        verify(teacherRepository, never()).save(any(TeacherProfile.class));
     }
 
     @Test
     void updateTeacherProfile_ShouldUpdateProfile_WhenProfileExists() {
-        Long teacherId = 1L;
+        UUID userId = UUID.randomUUID();
 
         TeacherProfile profile = TeacherProfile.builder()
-                .id(teacherId)
                 .bio("old-test-bio")
                 .experience("old-test-experience")
                 .build();
 
         UpdateTeacherProfileRequest request = new UpdateTeacherProfileRequest("test-bio", "test-experience");
 
-        when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(profile));
+        when(currentUser.getUserId()).thenReturn(userId);
+        when(teacherRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(teacherRepository.save(profile)).thenReturn(profile);
 
-        service.updateTeacherProfile(teacherId, request);
+        service.updateMyTeacherProfile(request);
 
         assertEquals(request.bio(), profile.getBio());
         assertEquals(request.experience(), profile.getExperience());
 
-        verify(teacherRepository, times(1)).findById(teacherId);
+        verify(teacherRepository, times(1)).findByUserId(userId);
         verify(teacherRepository, times(1)).save(profile);
     }
 
     @Test
     void updateTeacherProfile_ShouldThrowException_WhenProfileDoesNotExist() {
-        Long teacherId = 1L;
+        UUID userId = UUID.randomUUID();
 
         UpdateTeacherProfileRequest request = new UpdateTeacherProfileRequest("test-bio", "test-experience");
 
-        when(teacherRepository.findById(teacherId)).thenReturn(Optional.empty());
+        when(currentUser.getUserId()).thenReturn(userId);
+        when(teacherRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> service.updateTeacherProfile(teacherId, request));
+                () -> service.updateMyTeacherProfile(request));
 
         assertEquals(ErrorCodes.TEACHER_PROFILE_NOT_FOUND, exception.getErrorCode());
 
-        verify(teacherRepository, times(1)).findById(teacherId);
+        verify(teacherRepository, times(1)).findByUserId(userId);
         verify(teacherRepository, never()).save(any(TeacherProfile.class));
     }
 }

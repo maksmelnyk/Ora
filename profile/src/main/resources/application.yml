@@ -12,23 +12,31 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "${KEYCLOAK_ISSUER_URI}"
   rabbitmq:
-      host: localhost
-      port: 5672
-      username: "${RABBITMQ_DEFAULT_USER}"
-      password: "${RABBITMQ_DEFAULT_PASS}"
-      listener:
-        simple:
-          retry:
-            enabled: true
-            initial-interval: 1000
-            max-attempts: 3
-            multiplier: 1.0
-            max-interval: 10000
-  
+    host: localhost
+    port: 5672
+    username: "${RABBITMQ_DEFAULT_USER}"
+    password: "${RABBITMQ_DEFAULT_PASS}"
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 1.0
+          max-interval: 10000
+
 app:
   rabbitmq:
-    userExchange: "${USER_CREATION_EXCHANGE}"
+    userExchange: "${USER_EXCHANGE}"
     userCreatedRoutingKey: "${USER_CREATED_ROUTING_KEY}"
     userCreatedQueue: "${USER_CREATED_QUEUE}"
     userResponseQueue: "${USER_RESPONSE_QUEUE}"
+    teacherExchange: "${TEACHER_EXCHANGE}"
+    teacherCreatedQueue: "${TEACHER_CREATED_QUEUE}"
+    teacherCreatedRoutingKey: "${TEACHER_CREATED_ROUTING_KEY}"

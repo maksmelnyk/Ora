@@ -29,3 +29,6 @@ app:
     userCreatedRoutingKey: "${USER_CREATED_ROUTING_KEY}"
     userCreatedQueue: "${USER_CREATED_QUEUE}"
     userResponseQueue: "${USER_RESPONSE_QUEUE}"
+    teacherExchange: "${TEACHER_EXCHANGE}"
+    teacherCreatedQueue: "${TEACHER_CREATED_QUEUE}"
+    teacherCreatedRoutingKey: "${TEACHER_CREATED_ROUTING_KEY}"

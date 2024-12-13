@@ -1,16 +1,9 @@
 package com.example.profile.teacherProfile;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/teacher-profiles")
@@ -18,24 +11,27 @@ import lombok.RequiredArgsConstructor;
 public class TeacherProfileController {
     private final TeacherProfileService service;
 
+    @GetMapping()
+    public ResponseEntity<TeacherProfileResponse[]> getTeacherProfiles(
+            @RequestParam(defaultValue = "0") int skip,
+            @RequestParam(defaultValue = "10") int take) {
+        return ResponseEntity.ok(this.service.getTeacherProfiles(skip, take));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TeacherProfileResponse> getTeacherProfileById(@PathVariable Long id) {
         return ResponseEntity.ok(this.service.getTeacherProfileById(id));
     }
 
-    @PostMapping("/{userProfileId}")
-    public ResponseEntity<Void> createUserProfile(
-            @PathVariable Long userProfileId,
-            @RequestBody @Valid UpdateTeacherProfileRequest request) {
-        this.service.createTeacherProfile(userProfileId, request);
+    @PostMapping("/me")
+    public ResponseEntity<Void> createMyTeacherProfile(@RequestBody @Valid UpdateTeacherProfileRequest request) {
+        this.service.createMyTeacherProfile(request);
         return ResponseEntity.accepted().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> updateUserProfile(
-            @PathVariable Long id,
-            @RequestBody @Valid UpdateTeacherProfileRequest request) {
-        this.service.updateTeacherProfile(id, request);
+    @PutMapping("/me")
+    public ResponseEntity<Void> updateMyTeacherProfile(@RequestBody @Valid UpdateTeacherProfileRequest request) {
+        this.service.updateMyTeacherProfile(request);
         return ResponseEntity.accepted().build();
     }
 }

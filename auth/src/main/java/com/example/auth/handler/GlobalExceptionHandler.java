@@ -1,15 +1,15 @@
 package com.example.auth.handler;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.example.auth.exception.AuthenticationException;
+import com.example.auth.exception.ResourceNotCreatedException;
+import com.example.auth.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.example.auth.exception.AuthenticationException;
-import com.example.auth.exception.ValidationException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,6 +21,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException ex) {
         return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ResourceNotCreatedException.class)
+    public ResponseEntity<Map<String, String>> handleResourceNotCreatedException(ResourceNotCreatedException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)

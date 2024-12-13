@@ -1,9 +1,8 @@
 package com.example.auth.rabbitmq;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-
-import lombok.Data;
 
 @Data
 @Component
@@ -13,4 +12,7 @@ public class RabbitMQProperties {
     private String userCreatedRoutingKey;
     private String userCreatedQueue;
     private String userResponseQueue;
+    private String teacherExchange;
+    private String teacherCreatedQueue;
+    private String teacherCreatedRoutingKey;
 }
