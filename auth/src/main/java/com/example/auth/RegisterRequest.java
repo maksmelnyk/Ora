@@ -1,12 +1,12 @@
 package com.example.auth;
 
-import java.time.LocalDate;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.NonNull;
+
+import java.time.LocalDate;
 
 public record RegisterRequest(
         @NotEmpty @Size(min = 3, max = 20) String username,

@@ -1,9 +1,9 @@
 package com.example.profile.userProfile;
 
-import java.time.LocalDate;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
+
+import java.time.LocalDate;
 
 public record UpdateUserProfileRequest(
         @NotBlank

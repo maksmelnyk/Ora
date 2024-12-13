@@ -5,12 +5,12 @@ POST {{base_url}}/register
 Content-Type: application/json
 
 {
-    "username": "username",
-    "firstName": "first-name",
-    "lastName": "last-name",
-    "email": "email@gmali.com",
-    "password": "password",
-    "birthDate": "2000-01-01"
+  "username": "username",
+  "firstName": "first-name",
+  "lastName": "last-name",
+  "email": "email@gmali.com",
+  "password": "password",
+  "birthDate": "2000-01-01"
 }
 
 ###
