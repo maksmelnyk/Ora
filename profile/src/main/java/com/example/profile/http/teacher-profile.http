@@ -5,18 +5,14 @@
 POST http://localhost:8080/realms/coursio/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 
-username = email@gmali.com &
-password = password &
-grant_type = password &
-client_id = auth-service &
-scope = openid
+username=teacher1@mail.com&password=password&grant_type=password&client_id=profile-service&scope=openid
 
 ###
 GET {{base_url}}?skip=0&take=10
 Authorization: Bearer {{auth.response.body.access_token}}
 
 ###
-GET {{base_url}}/6
+GET {{base_url}}/1
 Authorization: Bearer {{auth.response.body.access_token}}
 
 ###
@@ -25,8 +21,8 @@ Authorization: Bearer {{auth.response.body.access_token}}
 Content-Type: application/json
 
 {
-  "bio": "test-bio",
-  "experience": "test-experience"
+  "bio": "teacher1-bio",
+  "experience": "teacher1-experience"
 }
 
 ###

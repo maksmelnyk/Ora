@@ -5,11 +5,7 @@
 POST http://localhost:8080/realms/coursio/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 
-username = email1@gmali.com &
-password = password &
-grant_type = password &
-client_id = auth-service &
-scope = openid
+username=teacher1@mail.com&password=password&grant_type=password&client_id=profile-service&scope=openid
 
 ###
 GET {{base_url}}/me
