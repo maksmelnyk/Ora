@@ -41,7 +41,7 @@ func LoadConfig() Config {
 		User:     GetEnv("POSTGRES_USER"),
 		Password: GetEnv("POSTGRES_PASSWORD"),
 		PgDriver: GetEnv("POSTGRES_DRIVER"),
-		DbName:   GetEnv("POSTGRES_SCHEDULING_DBNAME"),
+		DbName:   GetEnv("SCHEDULING_DB_NAME"),
 	}
 
 	keycloakConfig := KeycloakConfig{
