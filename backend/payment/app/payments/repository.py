@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.payments.transaction import Transaction, TransactionStatus
-from app.core.base_repository import BaseRepository
+from app.core.database.base_repository import BaseRepository
 
 
 class PaymentRepository(BaseRepository):

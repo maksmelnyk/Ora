@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from app.core.database import Base
+from app.core.database.config import Base
 
 
 class TransactionStatus(str, enum.Enum):

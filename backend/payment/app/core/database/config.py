@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 from typing import AsyncIterator
-from app.core.config import Settings
+from app.core.config.settings import Settings
 from app.core.dependencies import get_settings
 
 
@@ -20,11 +20,11 @@ class Base(AsyncAttrs, DeclarativeBase):
 settings: Settings = get_settings()
 
 engine: AsyncEngine = create_async_engine(
-    url=settings.db.URL,
-    echo=settings.db.DEBUG,
-    pool_size=settings.db.POOL_SIZE,
-    max_overflow=settings.db.MAX_OVERFLOW,
-    connect_args={"timeout": settings.db.TIMEOUT},
+    url=settings.db.url,
+    echo=settings.db.debug,
+    pool_size=settings.db.pool_size,
+    max_overflow=settings.db.max_overflow,
+    connect_args={"timeout": settings.db.timeout},
 )
 
 SessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)

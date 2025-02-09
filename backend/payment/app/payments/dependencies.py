@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db_session
+from app.core.database.config import get_db_session
 from app.payments.repository import PaymentRepository
 from app.payments.service import PaymentService
 
