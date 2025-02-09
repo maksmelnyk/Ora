@@ -26,8 +26,8 @@ public interface ISessionService
 }
 
 public sealed class SessionService(
-    ICurrentUser currentUser, 
-    ISessionRepository repository, 
+    ICurrentUser currentUser,
+    ISessionRepository repository,
     IValidator<SessionRequest> validator
 ) : ISessionService
 {
@@ -93,7 +93,7 @@ public sealed class SessionService(
 
         if (session.TeacherUserId != currentUser.GetUserId())
         {
-            throw AppException.NotFound("Session not found", ErrorCode.SessionNotFound);
+            throw new ResourceNotFoundException("Session not found", ErrorCode.SessionNotFound);
         }
 
         SessionMapper.MapToSession(session, request);
@@ -107,7 +107,7 @@ public sealed class SessionService(
 
         if (session.TeacherUserId != currentUser.GetUserId())
         {
-            throw AppException.NotFound("Session not found", ErrorCode.SessionNotFound);
+            throw new ResourceNotFoundException("Session not found", ErrorCode.SessionNotFound);
         }
 
         session.IsDeleted = true;

@@ -20,7 +20,7 @@ public class EnrollmentService(
     {
         if (!await sessionRepository.IsSessionExistsAsync(sessionId, token))
         {
-            throw AppException.NotFound("Session not found", ErrorCode.SessionNotFound);
+            throw new ResourceNotFoundException("Session not found", ErrorCode.SessionNotFound);
         }
 
         var enrollment = new Enrollment

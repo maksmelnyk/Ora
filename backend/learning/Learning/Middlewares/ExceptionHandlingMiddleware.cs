@@ -1,60 +1,60 @@
 using System.Net;
+using FluentValidation;
 using Learning.Exceptions;
 
 namespace Learning.Middlewares;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next)
+public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
-    private readonly RequestDelegate _next = next;
-
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
-        catch (FluentValidation.ValidationException ex)
+        catch (ValidationException ex)
         {
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            context.Response.ContentType = "application/json";
+            await WriteErrorResponse(
+                context,
+                "Validation failed",
+                "ERROR_VALIDATION",
+                (int)HttpStatusCode.UnprocessableEntity,
+                ex.Errors
+            );
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.NotFound);
+        }
+        catch (InvalidRequestException ex)
+        {
+            await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.BadRequest);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Request failed: ");
+            await WriteErrorResponse(context, "Unhandled exception occurred", "ERROR_INTERNAL_SERVER", (int)HttpStatusCode.InternalServerError);
+        }
+    }
 
-            var response = new
-            {
-                ErrorMessage = "Validation failed.",
-                ErrorCode = "ERROR_VALIDATION",
-                StatusCode = HttpStatusCode.BadRequest,
-                Errors = ex.Errors.Select(err => new
-                {
-                    Field = err.PropertyName,
-                    Message = err.ErrorMessage
-                })
-            };
+    private async Task WriteErrorResponse(
+        HttpContext context,
+        string errorMessage,
+        string errorCode,
+        int statusCode,
+        IEnumerable<object> errors = null
+    )
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
 
-            await context.Response.WriteAsJsonAsync(response);
-        }
-        catch (AppException ex)
+        var response = new
         {
-            context.Response.StatusCode = (int)ex.StatusCode;
-            context.Response.ContentType = "application/json";
-            var response = new
-            {
-                ex.ErrorMessage,
-                ex.ErrorCode,
-                ex.StatusCode
-            };
-            await context.Response.WriteAsJsonAsync(response);
-        }
-        catch (Exception)
-        {
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
-            var response = new
-            {
-                ErrorMessage = "An unexpected error occurred.",
-                ErrorCode = "ERROR_INTERNAL_SERVER",
-                StatusCode = HttpStatusCode.InternalServerError
-            };
-            await context.Response.WriteAsJsonAsync(response);
-        }
+            StatusCode = statusCode,
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage,
+            Details = errors
+        };
+        await context.Response.WriteAsJsonAsync(response);
     }
 }
