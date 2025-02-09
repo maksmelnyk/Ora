@@ -1,5 +1,6 @@
 server:
-  port: 8082
+  port: "${PROFILE_PORT}"
+  name: "${PROFILE_NAME:-profile-service}"
 
 spring:
   datasource:
@@ -19,9 +20,9 @@ spring:
           issuer-uri: "${KEYCLOAK_ISSUER_URI}"
   rabbitmq:
     host: localhost
-    port: 5672
-    username: "${RABBITMQ_DEFAULT_USER}"
-    password: "${RABBITMQ_DEFAULT_PASS}"
+    port: "${RABBITMQ_PORT}"
+    username: "${RABBITMQ_USER}"
+    password: "${RABBITMQ_PASS}"
     listener:
       simple:
         retry:

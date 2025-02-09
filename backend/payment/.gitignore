@@ -68,3 +68,7 @@ dmypy.json
 # FastAPI specific
 *.db
 *.sqlite3
+
+# Ignore the log folder
+/log/
+/logs/

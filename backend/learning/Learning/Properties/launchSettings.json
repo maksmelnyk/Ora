@@ -16,7 +16,8 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7157;http://localhost:8083",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HTTPS_PORT": "7157"
       }
     }
   }

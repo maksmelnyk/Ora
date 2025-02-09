@@ -1,12 +1,12 @@
 server:
-  port: 8081
+  port: "${AUTH_PORT}"
 
 spring:
   rabbitmq:
     host: localhost
-    port: 5672
-    username: "${RABBITMQ_DEFAULT_USER}"
-    password: "${RABBITMQ_DEFAULT_PASS}"
+    port: "${RABBITMQ_PORT}"
+    username: "${RABBITMQ_USER}"
+    password: "${RABBITMQ_PASS}"
     listener:
       simple:
         retry:
