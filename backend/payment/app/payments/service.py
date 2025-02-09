@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import List
 from uuid import UUID
 
 from app.payments.schemas import PaymentCreateRequest, PaymentResponse
@@ -9,6 +10,20 @@ from app.payments.transaction import Transaction, TransactionStatus
 class PaymentService:
     def __init__(self, repo: PaymentRepository) -> None:
         self.repo: PaymentRepository = repo
+
+    async def get_my_payments(
+        self, user_id: UUID, skip: int, take: int
+    ) -> List[PaymentResponse]:
+        payments: List[Transaction] = await self.repo.get_transactions_by_user_id(
+            user_id=user_id, skip=skip, take=take
+        )
+        payment_responses: List[PaymentResponse] = [
+            PaymentResponse(
+                id=p.id, amount=p.amount, currency=p.currency, status=p.status
+            )
+            for p in payments
+        ]
+        return payment_responses
 
     async def create_payment(
         self, user_id: UUID, request: PaymentCreateRequest
