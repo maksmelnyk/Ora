@@ -9,4 +9,5 @@ public class Session
     public SessionType Type { get; set; }
     public Guid TeacherUserId { get; set; }
     public List<SessionOption> Options { get; set; }
+    public List<Enrollment> Enrollments { get; set; }
 }

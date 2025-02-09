@@ -6,5 +6,6 @@ public class Enrollment
     public long SessionId { get; set; }
     public Guid StudentUserId { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime? CompletedAt { get; set; } 
+    public DateTime? CompletedAt { get; set; }
+    public Session Session { get; set; }
 }

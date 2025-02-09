@@ -23,13 +23,10 @@ public class SessionRepository(AppDbContext db) : ISessionRepository
 
     public Task<Session[]> GetEnrolledSessionsAsync(Guid studentId, int skip, int take, CancellationToken token)
     {
-        return db.Session.Where(e => !e.IsDeleted)
-            .Join(
-                db.Enrollment.Where(e => e.StudentUserId == studentId && e.CompletedAt == null), 
-                s => s.Id, 
-                e => e.SessionId, 
-                (s, e) => s
-            )
+        return db.Enrollment.Where(e => e.StudentUserId == studentId)
+            .OrderBy(e => e.CreatedAt)
+            .Select(e => e.Session)
+            .Where(e => !e.IsDeleted)
             .Skip(skip)
             .Take(take)
             .ToArrayAsync(token);
