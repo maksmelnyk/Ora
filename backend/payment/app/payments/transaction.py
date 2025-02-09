@@ -25,6 +25,12 @@ class Transaction(Base):
     provider_reference_id: Mapped[str] = mapped_column(nullable=False)
     amount: Mapped[Decimal] = mapped_column(nullable=False)
     currency: Mapped[str] = mapped_column(nullable=False)
-    status: Mapped[TransactionStatus] = mapped_column(__name_pos=String, default=TransactionStatus.PENDING)
-    created_at: Mapped[datetime] = mapped_column(__name_pos=TIMESTAMP(timezone=True), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(__name_pos=TIMESTAMP(timezone=True), nullable=False)
+    status: Mapped[TransactionStatus] = mapped_column(
+        __name_pos=String, default=TransactionStatus.PENDING
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        __name_pos=TIMESTAMP(timezone=True), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        __name_pos=TIMESTAMP(timezone=True), nullable=False
+    )

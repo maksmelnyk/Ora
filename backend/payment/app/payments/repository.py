@@ -48,11 +48,11 @@ class PaymentRepository(BaseRepository):
             .where(Transaction.id == transaction_id)
             .values(status=status, updated_at=datetime.now())
         )
-        if not self.session.is_active: 
-            async with self.session.begin(): 
-                result: CursorResult[Any] = await self.session.execute(statement=stmt) 
-        else: 
-            result: CursorResult[Any] = await self.session.execute(statement=stmt) 
+        if not self.session.is_active:
+            async with self.session.begin():
+                result: CursorResult[Any] = await self.session.execute(statement=stmt)
+        else:
+            result: CursorResult[Any] = await self.session.execute(statement=stmt)
 
-        await self.session.commit() 
+        await self.session.commit()
         return result.rowcount > 0

@@ -1,14 +1,12 @@
 import httpx
-import logging
 
+from loguru import logger
 from datetime import datetime, timezone
 from http import HTTPStatus
 from typing import Optional, Dict, Any
 
 from app.exceptions.app_exception import AppHttpException
 from app.exceptions.error_codes import ErrorCode
-
-logger: logging.Logger = logging.getLogger(name=__name__)
 
 
 class JwksProvider:
@@ -43,14 +41,14 @@ class JwksProvider:
     async def __fetch_public_keys(self) -> None:
         """Fetch and cache public keys asynchronously from the JWKS URI."""
         try:
-            logger.info(msg=f"Fetching JWKS from {self.jwks_uri}")
+            logger.info(f"Fetching JWKS from {self.jwks_uri}")
             async with httpx.AsyncClient() as client:
                 response: httpx.Response = await client.get(url=self.jwks_uri)
                 response.raise_for_status()
                 self.keys = response.json()
                 self.last_update = datetime.now(tz=timezone.utc)
         except Exception as e:
-            logger.error(msg=f"Failed to fetch JWKS: {e}")
+            logger.exception("Failed to fetch JWKS: {error}", error=str(object=e))
             raise AppHttpException(
                 status_code=HTTPStatus.UNAUTHORIZED,
                 error_code=ErrorCode.ERROR_PUBLIC_KEY_FETCH,

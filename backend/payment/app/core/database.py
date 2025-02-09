@@ -20,11 +20,11 @@ class Base(AsyncAttrs, DeclarativeBase):
 settings: Settings = get_settings()
 
 engine: AsyncEngine = create_async_engine(
-    url=settings.db.DATABASE_URL,
+    url=settings.db.URL,
     echo=settings.db.DEBUG,
-    pool_size=10,
-    max_overflow=20,
-    connect_args={"timeout": 30},
+    pool_size=settings.db.POOL_SIZE,
+    max_overflow=settings.db.MAX_OVERFLOW,
+    connect_args={"timeout": settings.db.TIMEOUT},
 )
 
 SessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)

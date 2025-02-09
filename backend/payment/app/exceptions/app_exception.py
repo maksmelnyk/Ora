@@ -13,3 +13,11 @@ class AppException(Exception):
         super().__init__(message)
         self.error_code: str = error_code
         self.message: str = message
+
+
+class ResourceNotFoundException(AppException):
+    pass
+
+
+class InvalidRequestException(AppException):
+    pass
