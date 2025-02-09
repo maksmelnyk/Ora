@@ -4,11 +4,13 @@ import (
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
+
+	"github.com/maksmelnyk/scheduling/internal/logger"
 )
 
-func InitializeBookingModule(db *sqlx.DB) http.Handler {
+func InitializeBookingModule(log logger.Logger, db *sqlx.DB) http.Handler {
 	repo := NewBookingRepository(db)
-	service := NewBookingService(repo)
+	service := NewBookingService(log, repo)
 	handler := NewBookingHandler(service)
 	return Routes(handler)
 }

@@ -9,7 +9,7 @@ import (
 
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
 	ec "github.com/maksmelnyk/scheduling/internal/errors"
-	log "github.com/maksmelnyk/scheduling/internal/logger"
+	"github.com/maksmelnyk/scheduling/internal/logger"
 	mid "github.com/maksmelnyk/scheduling/internal/middleware"
 	con "github.com/maksmelnyk/scheduling/internal/schedule/contracts"
 )
@@ -29,14 +29,17 @@ type ScheduleRepository interface {
 }
 
 type ScheduleService struct {
+	log  logger.Logger
 	repo ScheduleRepository
 }
 
-func NewScheduleService(repo ScheduleRepository) *ScheduleService {
-	return &ScheduleService{repo: repo}
+func NewScheduleService(log logger.Logger, repo ScheduleRepository) *ScheduleService {
+	return &ScheduleService{log: log, repo: repo}
 }
 
 func (s *ScheduleService) GetUserSchedule(ctx context.Context, userId uuid.UUID, fromDate time.Time, toDate time.Time) (*con.ScheduleResponse, error) {
+	log := logger.FromContext(ctx, s.log)
+
 	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, fromDate, toDate)
 	if err != nil {
 		log.Error("failed to get working periods", err)
@@ -74,6 +77,8 @@ func (s *ScheduleService) GetUserSchedule(ctx context.Context, userId uuid.UUID,
 }
 
 func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *con.WorkingPeriodRequest) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		return ec.ErrUserIdNotFound
@@ -102,6 +107,8 @@ func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *con.Working
 }
 
 func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr *con.WorkingPeriodRequest) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		return ec.ErrUserIdNotFound
@@ -139,6 +146,8 @@ func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr
 }
 
 func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		return ec.ErrUserIdNotFound
@@ -165,6 +174,8 @@ func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) err
 }
 
 func (s *ScheduleService) AddScheduledEvent(ctx context.Context, workingPeriodId int64, ser *con.ScheduledEventRequest) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		return ec.ErrUserIdNotFound
@@ -207,6 +218,8 @@ func (s *ScheduleService) AddScheduledEvent(ctx context.Context, workingPeriodId
 }
 
 func (s *ScheduleService) DeleteScheduledEvent(ctx context.Context, id int64) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		return ec.ErrUserIdNotFound

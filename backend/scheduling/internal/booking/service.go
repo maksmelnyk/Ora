@@ -8,7 +8,7 @@ import (
 
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
 	ec "github.com/maksmelnyk/scheduling/internal/errors"
-	log "github.com/maksmelnyk/scheduling/internal/logger"
+	"github.com/maksmelnyk/scheduling/internal/logger"
 	mid "github.com/maksmelnyk/scheduling/internal/middleware"
 )
 
@@ -21,14 +21,17 @@ type BookingRepository interface {
 }
 
 type BookingService struct {
+	log  logger.Logger
 	repo BookingRepository
 }
 
-func NewBookingService(repo BookingRepository) *BookingService {
-	return &BookingService{repo: repo}
+func NewBookingService(log logger.Logger, repo BookingRepository) *BookingService {
+	return &BookingService{log: log, repo: repo}
 }
 
 func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		log.Error("User ID not found in context")
@@ -63,6 +66,8 @@ func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest
 }
 
 func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, status int) error {
+	log := logger.FromContext(ctx, s.log)
+
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
 	if !ok {
 		log.Error("User ID not found in context")
@@ -93,6 +98,8 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 }
 
 func (s *BookingService) validateBookingOverlap(ctx context.Context, request *BookingRequest) error {
+	log := logger.FromContext(ctx, s.log)
+
 	scheduledEvents, err := s.repo.GetScheduledEvents(ctx, request.WorkingPeriodId)
 	if err != nil {
 		return err
