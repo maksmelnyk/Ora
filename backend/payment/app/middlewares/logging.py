@@ -1,62 +1,58 @@
 import uuid
 import time
-import logging
-import traceback
 
+from jose import jwt
+from typing import Optional, Dict, Any
+from loguru import logger
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
 
-logger: logging.Logger = logging.getLogger(name=__name__)
+def get_user_id_from_token(auth_header: Optional[str]) -> Optional[str]:
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+
+    try:
+        token: str = auth_header.split(" ")[1]
+        payload: Dict[str, Any] = jwt.decode(
+            token=token, key="", options={"verify_signature": False}
+        )
+        return payload.get("sub")
+    except Exception:
+        return None
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        request_id = str(object=uuid.uuid4())
-        request.state.request_id = request_id
-
-        logger.info(
-            "Incoming request",
-            extra={
-                "request_id": request_id,
-                "method": request.method,
-                "url": str(request.url),
-                "client_ip": request.client.host if request.client else None,
-            },
-        )
-
+        auth_header: str | None = request.headers.get("Authorization")
         start_time: float = time.time()
-        
-        try:
-            response: Response = await call_next(request)
-            process_time: float = time.time() - start_time
-            logger.info(
-                msg="Request completed",
-                extra={
-                    "request_id": request_id,
-                    "status_code": response.status_code,
-                    "processing_time": process_time,
-                },
-            )
-            
-        except Exception as exc:
-            process_time: float = time.time() - start_time
-            logger.error(
-                msg="Request failed",
-                extra={
-                    "request_id": request_id,
-                    "processing_time": process_time,
-                    "error": str(object=exc),
-                    "error_type": exc.__class__.__name__,
-                    "traceback": traceback.format_exc(),
-                },
-            )
-            raise
 
-        response.headers["X-Request-ID"] = request_id
-        response.headers["X-Process-Time"] = str(object=process_time)
-        
-        return response
+        with logger.contextualize(
+            request_id=str(object=uuid.uuid4()),
+            http_method=request.method,
+            http_path=request.url.path,
+            http_query=request.url.query,
+            client_ip=request.client.host if request.client else "anonymous",
+            user_id=get_user_id_from_token(auth_header=auth_header),
+        ):
+
+            duration: float = time.time() - start_time
+
+            response: Response = await call_next(request)
+
+            log_data: Dict[str, Any] = {
+                "status_code": response.status_code,
+                "duration_ms": duration,
+            }
+
+            if response.status_code >= 500:
+                logger.error("Request completed with server error", extra=log_data)
+            elif response.status_code >= 400:
+                logger.warning("Request completed with user error", extra=log_data)
+            else:
+                logger.info("Request completed successfully", extra=log_data)
+
+            return response
