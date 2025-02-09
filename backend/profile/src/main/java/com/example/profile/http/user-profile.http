@@ -12,7 +12,7 @@ GET {{base_url}}/me
 Authorization: Bearer {{auth.response.body.access_token}}
 
 ###
-GET {{base_url}}/11
+GET {{base_url}}/1
 Authorization: Bearer {{auth.response.body.access_token}}
 
 ###
