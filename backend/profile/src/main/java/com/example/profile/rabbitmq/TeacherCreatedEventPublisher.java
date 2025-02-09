@@ -1,14 +1,17 @@
 package com.example.profile.rabbitmq;
 
-import com.example.profile.exception.ErrorCodes;
-import com.example.profile.exception.ResourceNotCreatedException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
+import java.util.UUID;
+
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import com.example.profile.exception.MessageBrokerException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @AllArgsConstructor
 public class TeacherCreatedEventPublisher {
@@ -24,11 +27,10 @@ public class TeacherCreatedEventPublisher {
             template.convertAndSend(
                     this.properties.getTeacherExchange(),
                     this.properties.getTeacherCreatedRoutingKey(),
-                    eventJson
-            );
+                    eventJson);
         } catch (Exception e) {
-            // TODO: fix exception
-            throw new ResourceNotCreatedException("Failed to create user", ErrorCodes.TEACHER_PROFILE_NOT_FOUND, e);
+            log.error("Failed to send TeacherCreatedEvent. Error: {}", e.getMessage(), e);
+            throw new MessageBrokerException("Failed to send TeacherCreatedEvent");
         }
     }
 }

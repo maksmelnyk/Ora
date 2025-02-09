@@ -1,13 +1,17 @@
 package com.example.profile.handler;
 
-import com.example.profile.exception.*;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.example.profile.exception.AuthenticationException;
+import com.example.profile.exception.InvalidRequestException;
+import com.example.profile.exception.ResourceNotFoundException;
+import com.example.profile.exception.ValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -16,23 +20,18 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(ResourceExistsException.class)
-    public ResponseEntity<Map<String, String>> handleResourceExistsException(ResourceExistsException ex) {
-        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(ResourceNotCreatedException.class)
-    public ResponseEntity<Map<String, String>> handleResourceNotCreatedException(ResourceNotCreatedException ex) {
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<Map<String, String>> handleResourceExistsException(InvalidRequestException ex) {
         return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
-        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    @ExceptionHandler(UserNotAuthenticatedException.class)
-    public ResponseEntity<Map<String, String>> handleUserNotAuthenticatedException(UserNotAuthenticatedException ex) {
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotAuthenticatedException(AuthenticationException ex) {
         return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.UNAUTHORIZED);
     }
 

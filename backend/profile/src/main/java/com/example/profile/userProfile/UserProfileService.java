@@ -4,8 +4,13 @@ import com.example.profile.CurrentUser;
 import com.example.profile.exception.ErrorCodes;
 import com.example.profile.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
@@ -14,11 +19,11 @@ public class UserProfileService {
     private final CurrentUser currentUser;
 
     public UserProfileResponse getMyUserProfile() {
-        return this.repository.findByUserId(this.currentUser.getUserId())
+        UUID userId = this.currentUser.getUserId();
+        return this.repository.findByUserId(userId)
                 .map(mapper::fromUserProfile)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Profile with id " + this.currentUser.getUserId() + "not found",
-                                ErrorCodes.USER_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + userId + "not found",
+                        ErrorCodes.USER_PROFILE_NOT_FOUND));
     }
 
     public UserProfileResponse getUserProfileById(Long id) {
@@ -29,10 +34,10 @@ public class UserProfileService {
     }
 
     public void updateUserProfile(UpdateUserProfileRequest request) {
-        var profile = this.repository.findByUserId(this.currentUser.getUserId())
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Profile with id " + currentUser.getUserId() + "not found",
-                                ErrorCodes.USER_PROFILE_NOT_FOUND));
+        UUID userId = this.currentUser.getUserId();
+        var profile = this.repository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + userId + "not found",
+                        ErrorCodes.USER_PROFILE_NOT_FOUND));
 
         profile.setFirstName(request.firstName());
         profile.setLastName(request.lastName());

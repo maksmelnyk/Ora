@@ -1,15 +1,20 @@
 package com.example.profile.rabbitmq;
 
-import com.example.profile.userProfile.UserProfile;
-import com.example.profile.userProfile.UserProfileMapper;
-import com.example.profile.userProfile.UserProfileRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
+import com.example.profile.exception.MessageBrokerException;
+import com.example.profile.userProfile.UserProfile;
+import com.example.profile.userProfile.UserProfileMapper;
+import com.example.profile.userProfile.UserProfileRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @AllArgsConstructor
 public class UserCreatedEventConsumer {
@@ -20,8 +25,8 @@ public class UserCreatedEventConsumer {
 
     @RabbitListener(queues = "${app.rabbitmq.userCreatedQueue}")
     public void processUserCreation(String eventJson,
-                                    @Header("amqp_correlationId") String correlationId,
-                                    @Header("amqp_replyTo") String replyTo) {
+            @Header("amqp_correlationId") String correlationId,
+            @Header("amqp_replyTo") String replyTo) {
         try {
             UserCreatedEvent event = objectMapper.readValue(eventJson, UserCreatedEvent.class);
 
@@ -36,6 +41,7 @@ public class UserCreatedEventConsumer {
             UserCreatedEvent event = new UserCreatedEvent();
             event.setStatus(UserCreatedEvent.UserCreationStatus.PROCESSING_ERROR);
             event.setErrorMessage("Error processing user creation: " + e.getMessage());
+            log.error("Error processing user creation: {}", e.getMessage(), e);
             sendResponse(event, correlationId, replyTo);
         }
     }
@@ -48,8 +54,8 @@ public class UserCreatedEventConsumer {
                 return message;
             });
         } catch (Exception e) {
-            // TODO: Handle response sending errors (e.g., log them)
-            System.err.println("Failed to send response: " + e.getMessage());
+            log.error("Error processing user creation: {}", e.getMessage(), e);
+            throw new MessageBrokerException("Error processing user creation");
         }
     }
 
