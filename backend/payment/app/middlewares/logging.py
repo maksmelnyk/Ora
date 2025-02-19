@@ -11,16 +11,24 @@ from starlette.responses import Response
 
 def get_user_id_from_token(auth_header: Optional[str]) -> Optional[str]:
     if not auth_header or not auth_header.startswith("Bearer "):
-        return None
+        return "unknown"
 
     try:
         token: str = auth_header.split(" ")[1]
         payload: Dict[str, Any] = jwt.decode(
-            token=token, key="", options={"verify_signature": False}
+            token,
+            key="dummy_key",
+            algorithms=["HS256", "RS256"],
+            options={
+                "verify_signature": False,
+                "verify_exp": False,
+                "verify_aud": False,
+                "verify_iss": False,
+            },
         )
         return payload.get("sub")
-    except Exception:
-        return None
+    except Exception as e:
+        return "unknown"
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):

@@ -53,11 +53,21 @@ class LogSettings:
     backup_count: int = get_env_var("PAYMENT_LOG_BACKUP_COUNT", default=5)
 
 
+class TelemetrySettings:
+    otel_endpoint: str = get_env_var(
+        name="OTEL_GRPC_URL", default="http://localhost:4317"
+    )
+    enable_otel_tracing: str = get_env_var("PAYMENT_OTEL_TRACING", default=True)
+    enable_otel_metrics: str = get_env_var("PAYMENT_OTEL_METRICS", default=True)
+    enable_otel_logging: str = get_env_var("PAYMENT_OTEL_LOGGING", default=True)
+
+
 class Settings:
     app: AppSettings = AppSettings()
     db: DatabaseSettings = DatabaseSettings()
     keycloak: KeycloakSettings = KeycloakSettings()
     log: LogSettings = LogSettings()
+    telemetry: TelemetrySettings = TelemetrySettings()
 
 
 settings = Settings()

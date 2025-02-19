@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from app.core.config.settings import Settings
-from app.core.logging.config import configure_logging
+from app.core.telemetry.config import configure_telemetry
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
 from app.core.database.config import engine
 from app.core.dependencies import get_settings, get_token_validator
 from app.middlewares.auth import AuthMiddleware
@@ -14,7 +15,7 @@ from app.payments.router import router as payment_router
 from app.exceptions.exception_handlers import setup_exception_handlers
 
 settings: Settings = get_settings()
-configure_logging(stg=settings.log)
+configure_telemetry(stg=settings)
 
 
 @asynccontextmanager
@@ -38,6 +39,8 @@ app = FastAPI(
     version=settings.app.version,
     debug=settings.app.debug,
 )
+
+FastAPIInstrumentor.instrument_app(app)  # type: ignore
 
 app.add_middleware(middleware_class=RequestLoggingMiddleware)
 app.add_middleware(middleware_class=AuthMiddleware, validator=get_token_validator())
