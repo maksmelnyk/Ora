@@ -14,14 +14,15 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.example.profile.exception.ErrorCodes;
-import com.example.profile.exception.ResourceNotFoundException;
-import com.example.profile.userProfile.UpdateUserProfileRequest;
-import com.example.profile.userProfile.UserProfile;
-import com.example.profile.userProfile.UserProfileMapper;
-import com.example.profile.userProfile.UserProfileRepository;
-import com.example.profile.userProfile.UserProfileResponse;
-import com.example.profile.userProfile.UserProfileService;
+import com.example.profile.exceptions.ErrorCodes;
+import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.features.userProfile.UpdateUserProfileRequest;
+import com.example.profile.features.userProfile.UserProfile;
+import com.example.profile.features.userProfile.UserProfileMapper;
+import com.example.profile.features.userProfile.UserProfileRepository;
+import com.example.profile.features.userProfile.UserProfileResponse;
+import com.example.profile.features.userProfile.UserProfileService;
+import com.example.profile.middlewares.security.CurrentUser;
 
 @ExtendWith(MockitoExtension.class)
 public class UserProfileServiceTest {
