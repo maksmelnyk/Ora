@@ -1,59 +1,72 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	cm "github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 
 	"github.com/maksmelnyk/scheduling/config"
 	"github.com/maksmelnyk/scheduling/internal/auth"
-	"github.com/maksmelnyk/scheduling/internal/database"
-	"github.com/maksmelnyk/scheduling/internal/logger"
-	"github.com/maksmelnyk/scheduling/internal/middleware"
-
 	"github.com/maksmelnyk/scheduling/internal/booking"
+	"github.com/maksmelnyk/scheduling/internal/database"
+	"github.com/maksmelnyk/scheduling/internal/middleware"
 	"github.com/maksmelnyk/scheduling/internal/schedule"
+	"github.com/maksmelnyk/scheduling/internal/telemetry"
 )
 
 func main() {
-	c := config.LoadConfig()
+	cfg := config.LoadConfig()
 
-	log, err := logger.NewAppLogger(c.Log)
+	ctx := context.Background()
+
+	tel, err := telemetry.Init(ctx, cfg)
 	if err != nil {
-		log.Panicf("Postgresql init: %s", err)
+		log.Fatalf("failed to initialize telemetry: %v", err)
 	}
+	defer func() {
+		if err := tel.Shutdown(ctx); err != nil {
+			log.Printf("failed to shutdown telemetry: %v", err)
+		}
+	}()
 
-	jwksProvider := auth.NewJWKManager(c.Keycloak.JwksURI, time.Hour)
-	validator := auth.NewJWTValidator(jwksProvider, c.Keycloak.Issuer, c.Keycloak.Audience)
+	jwksProvider := auth.NewJWKManager(cfg.Keycloak.JwksURI, time.Hour)
+	validator := auth.NewJWTValidator(jwksProvider, cfg.Keycloak.Issuer, cfg.Keycloak.Audience)
 
-	db, err := database.NewPgSqlDb(&c.Postgres)
+	db, err := database.NewPgSqlDb(&cfg.Postgres)
 	if err != nil {
-		log.Panicf("Postgresql init: %s", err)
-	} else {
-		log.Infof("Postgres connected, Status: %#v", db.Stats())
+		tel.Logger.Panicf("Postgresql init: %s", err)
 	}
 	defer func(db *sqlx.DB) {
 		err := db.Close()
 		if err != nil {
-			log.Panicf("Postgresql close error: %s", err)
+			tel.Logger.Panicf("Postgresql close error: %s", err)
 		}
 	}(db)
 
 	r := chi.NewRouter()
-
 	r.Use(cm.CleanPath)
-	r.Use(middleware.LoggingMiddleware(log))
 	r.Use(cm.Recoverer)
+	r.Use(otelhttp.NewMiddleware("HTTPServer",
+		otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+			return r.Method + " " + r.URL.Path
+		}),
+		otelhttp.WithMeterProvider(otel.GetMeterProvider()),
+	))
+	r.Use(middleware.LoggingMiddleware(tel.Logger))
 	r.Use(middleware.AuthMiddleware(validator))
 
-	r.Mount("/api/v1/schedules", schedule.InitializeScheduleModule(log, db))
-	r.Mount("/api/v1/bookings", booking.InitializeBookingModule(log, db))
+	r.Mount("/api/v1/schedules", schedule.InitializeScheduleModule(tel.Logger, db))
+	r.Mount("/api/v1/bookings", booking.InitializeBookingModule(tel.Logger, db))
 
-	log.Infof("Starting server on : %s", c.Server.Port)
-	if err := http.ListenAndServe(":"+c.Server.Port, r); err != nil {
-		log.Panicf("Server failed to start: %v", err)
+	tel.Logger.Infof("Starting server on : %s", cfg.Server.Port)
+	if err := http.ListenAndServe(":"+cfg.Server.Port, r); err != nil {
+		tel.Logger.Panicf("Server failed to start: %v", err)
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	"go.opentelemetry.io/otel/sdk/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -46,7 +48,7 @@ func CustomISO8601TimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.UTC().Format(time.RFC3339))
 }
 
-func NewAppLogger(cfg config.LogConfig) (*AppLogger, error) {
+func NewAppLogger(cfg config.LogConfig, provider *log.LoggerProvider) (*AppLogger, error) {
 	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 
 	consoleCore := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.InfoLevel)
@@ -83,6 +85,11 @@ func NewAppLogger(cfg config.LogConfig) (*AppLogger, error) {
 
 		fileCore := zapcore.NewCore(fileEncoder, fileWriter, fileLevel)
 		cores = append(cores, fileCore)
+	}
+
+	if provider != nil {
+		otelCore := otelzap.NewCore("github.com/maksmelnyk/scheduling/internal/logger", otelzap.WithLoggerProvider(provider))
+		cores = append(cores, otelCore)
 	}
 
 	core := zapcore.NewTee(cores...)

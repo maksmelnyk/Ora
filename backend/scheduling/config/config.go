@@ -6,10 +6,11 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Postgres PostgresConfig
-	Keycloak KeycloakConfig
-	Log      LogConfig
+	Server    ServerConfig
+	Postgres  PostgresConfig
+	Keycloak  KeycloakConfig
+	Log       LogConfig
+	Telemetry TelemetryConfig
 }
 
 type ServerConfig struct {
@@ -41,6 +42,13 @@ type LogConfig struct {
 	MaxAge               int
 	MaxBackups           int
 	Compress             bool
+}
+
+type TelemetryConfig struct {
+	OtelEndpoint      string
+	EnableOtelTracing bool
+	EnableOtelMetrics bool
+	EnableOtelLogging bool
 }
 
 func GetEnvWithDefault[T any](key string, defaultValue T) T {
@@ -110,5 +118,12 @@ func LoadConfig() Config {
 		Compress:             GetEnvWithDefault("SCHEDULING_LOG_COMPRESS", true),
 	}
 
-	return Config{serverConfig, postgresConfig, keycloakConfig, logConfig}
+	telemetryConfig := TelemetryConfig{
+		OtelEndpoint:      GetEnvWithDefault("OTEL_GRPC_URL", "http://localhost:4317"),
+		EnableOtelTracing: GetEnvWithDefault("SCHEDULING_OTEL_TRACING", true),
+		EnableOtelMetrics: GetEnvWithDefault("SCHEDULING_OTEL_METRICS", true),
+		EnableOtelLogging: GetEnvWithDefault("SCHEDULING_OTEL_LOGGING", true),
+	}
+
+	return Config{serverConfig, postgresConfig, keycloakConfig, logConfig, telemetryConfig}
 }

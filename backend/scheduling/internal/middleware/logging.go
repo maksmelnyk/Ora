@@ -33,7 +33,7 @@ func getUserIdFromToken(authHeader string) string {
 		}
 	}
 
-	return ""
+	return "unknown"
 }
 
 func LoggingMiddleware(log *logger.AppLogger) func(http.Handler) http.Handler {
