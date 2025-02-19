@@ -1,12 +1,13 @@
-package com.example.auth.handler;
+package com.example.auth.handlers;
 
-import com.example.auth.exception.AuthenticationException;
-import com.example.auth.exception.ResourceNotCreatedException;
-import com.example.auth.exception.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.example.auth.exceptions.AuthenticationException;
+import com.example.auth.exceptions.ResourceNotCreatedException;
+import com.example.auth.exceptions.ValidationException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +31,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
-        return buildErrorResponse("An unexpected error occurred", "INTERNAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
+        return buildErrorResponse("An unexpected error occurred", "INTERNAL_SERVER_ERROR",
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private ResponseEntity<Map<String, String>> buildErrorResponse(String message, String errorCode, HttpStatus status) {
+    private ResponseEntity<Map<String, String>> buildErrorResponse(String message, String errorCode,
+            HttpStatus status) {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("message", message);
         errorResponse.put("code", errorCode);

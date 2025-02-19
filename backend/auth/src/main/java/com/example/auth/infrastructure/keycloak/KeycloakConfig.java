@@ -1,4 +1,4 @@
-package com.example.auth.keycloak;
+package com.example.auth.infrastructure.keycloak;
 
 import lombok.AllArgsConstructor;
 import org.keycloak.admin.client.Keycloak;

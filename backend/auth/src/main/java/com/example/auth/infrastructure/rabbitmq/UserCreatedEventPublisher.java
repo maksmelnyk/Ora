@@ -1,8 +1,8 @@
-package com.example.auth.rabbitmq;
+package com.example.auth.infrastructure.rabbitmq;
 
-import com.example.auth.exception.AuthenticationException;
-import com.example.auth.exception.ErrorCodes;
-import com.example.auth.rabbitmq.UserCreatedEvent.UserCreationStatus;
+import com.example.auth.exceptions.AuthenticationException;
+import com.example.auth.exceptions.ErrorCodes;
+import com.example.auth.infrastructure.rabbitmq.UserCreatedEvent.UserCreationStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

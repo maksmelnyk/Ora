@@ -1,8 +1,5 @@
-package com.example.auth.keycloak;
+package com.example.auth.infrastructure.keycloak;
 
-import com.example.auth.exception.AuthenticationException;
-import com.example.auth.exception.ErrorCodes;
-import com.example.auth.exception.ValidationException;
 import jakarta.ws.rs.core.Response;
 import lombok.AllArgsConstructor;
 import org.keycloak.admin.client.Keycloak;
@@ -15,6 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import com.example.auth.exceptions.AuthenticationException;
+import com.example.auth.exceptions.ErrorCodes;
+import com.example.auth.exceptions.ValidationException;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +55,8 @@ public class KeycloakClient {
 
     public void assignRoleToUser(String userId, String roleName) {
         try {
-            RoleRepresentation role = this.keycloak.realm(this.properties.getRealm()).roles().get(roleName).toRepresentation();
+            RoleRepresentation role = this.keycloak.realm(this.properties.getRealm()).roles().get(roleName)
+                    .toRepresentation();
 
             this.keycloak.realm(this.properties.getRealm())
                     .users()

@@ -1,4 +1,4 @@
-package com.example.auth.exception;
+package com.example.auth.exceptions;
 
 public class ErrorCodes {
     public static final String USERNAME_ALREADY_EXISTS = "ERROR_USERNAME_ALREADY_EXISTS";

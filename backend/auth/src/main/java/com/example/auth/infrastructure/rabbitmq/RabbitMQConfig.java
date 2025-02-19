@@ -1,4 +1,4 @@
-package com.example.auth.rabbitmq;
+package com.example.auth.infrastructure.rabbitmq;
 
 import lombok.AllArgsConstructor;
 import org.springframework.amqp.core.Binding;
@@ -48,7 +48,8 @@ public class RabbitMQConfig {
 
     @Bean
     Binding teacherCreationBinding(Queue teacherCreatedQueue, DirectExchange teacherExchange) {
-        return BindingBuilder.bind(teacherCreatedQueue).to(teacherExchange).with(this.properties.getTeacherCreatedRoutingKey());
+        return BindingBuilder.bind(teacherCreatedQueue).to(teacherExchange)
+                .with(this.properties.getTeacherCreatedRoutingKey());
     }
 
     @Bean
@@ -60,7 +61,7 @@ public class RabbitMQConfig {
     RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, Jackson2JsonMessageConverter converter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(converter);
-        //TODO: move to config
+        // TODO: move to config
         template.setReplyTimeout(60 * 1000);
         return template;
     }

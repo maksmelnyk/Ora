@@ -1,4 +1,4 @@
-package com.example.auth;
+package com.example.auth.middlewares;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

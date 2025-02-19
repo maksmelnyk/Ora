@@ -1,9 +1,10 @@
 package com.example.auth;
 
-import com.example.auth.keycloak.KeycloakClient;
-import com.example.auth.rabbitmq.UserCreatedEvent;
-import com.example.auth.rabbitmq.UserCreatedEvent.UserCreationStatus;
-import com.example.auth.rabbitmq.UserCreatedEventPublisher;
+import com.example.auth.infrastructure.keycloak.KeycloakClient;
+import com.example.auth.infrastructure.rabbitmq.UserCreatedEvent;
+import com.example.auth.infrastructure.rabbitmq.UserCreatedEventPublisher;
+import com.example.auth.infrastructure.rabbitmq.UserCreatedEvent.UserCreationStatus;
+
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

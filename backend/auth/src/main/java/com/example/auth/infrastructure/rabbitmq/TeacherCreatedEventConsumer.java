@@ -1,9 +1,9 @@
-package com.example.auth.rabbitmq;
+package com.example.auth.infrastructure.rabbitmq;
 
-import com.example.auth.exception.ErrorCodes;
-import com.example.auth.exception.ResourceNotCreatedException;
-import com.example.auth.keycloak.KeycloakClient;
-import com.example.auth.keycloak.KeycloakRole;
+import com.example.auth.exceptions.ErrorCodes;
+import com.example.auth.exceptions.ResourceNotCreatedException;
+import com.example.auth.infrastructure.keycloak.KeycloakClient;
+import com.example.auth.infrastructure.keycloak.KeycloakRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -21,7 +21,7 @@ public class TeacherCreatedEventConsumer {
             TeacherCreatedEvent event = this.objectMapper.readValue(eventJson, TeacherCreatedEvent.class);
             this.client.assignRoleToUser(event.getUserId().toString(), KeycloakRole.TEACHER);
         } catch (Exception e) {
-            //TODO: fix exception
+            // TODO: fix exception
             throw new ResourceNotCreatedException("Failed to assing role", ErrorCodes.USER_CREATION_FAILED, e);
         }
     }

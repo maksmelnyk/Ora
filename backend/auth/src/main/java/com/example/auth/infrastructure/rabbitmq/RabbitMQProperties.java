@@ -1,4 +1,4 @@
-package com.example.auth.rabbitmq;
+package com.example.auth.infrastructure.rabbitmq;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

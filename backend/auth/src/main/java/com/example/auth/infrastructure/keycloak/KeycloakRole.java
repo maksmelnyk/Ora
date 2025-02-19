@@ -1,4 +1,4 @@
-package com.example.auth.keycloak;
+package com.example.auth.infrastructure.keycloak;
 
 public class KeycloakRole {
     public static final String ADMIN = "ROLE_ADMIN";
