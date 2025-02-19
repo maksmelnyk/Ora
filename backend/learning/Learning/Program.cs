@@ -4,7 +4,7 @@ using Learning.Features.Enrollments;
 using Learning.Features.Sessions;
 using Learning.Infrastructure.Identity;
 using Learning.Infrastructure.Keycloak;
-using Learning.Infrastructure.Logging;
+using Learning.Infrastructure.Telemetry;
 using Learning.Middlewares;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
-using Serilog.Events;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,31 +20,14 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddCors();
 builder.Services.AddHttpContextAccessor();
 
-var logOptions = builder.Configuration.GetSection(nameof(LogOptions)).Get<LogOptions>() ?? new LogOptions();
-ArgumentNullException.ThrowIfNull(logOptions);
+var telemetryOptions = builder.Configuration.GetSection(nameof(TelemetryOptions)).Get<TelemetryOptions>();
+ArgumentNullException.ThrowIfNull(telemetryOptions);
 
-builder.Host.UseSerilog((context, services, configuration) =>
+if (telemetryOptions.OtelTelemetryEnabled())
 {
-    configuration.ReadFrom.Configuration(context.Configuration)
-                .ReadFrom.Services(services)
-                .Enrich.FromLogContext()
-                .Enrich.WithProperty("service_name", logOptions.ServiceName)
-                .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
-                .WriteTo.Logger(lc => lc
-                    .Filter.ByExcluding(logEvent =>
-                        logEvent.Properties.TryGetValue("SourceContext", out var sourceContext) &&
-                        (sourceContext.ToString().Contains("Microsoft") ||
-                         sourceContext.ToString().Contains("System")) &&
-                        logEvent.Level < LogEventLevel.Warning
-                    )
-                    .WriteTo.File(
-                        formatter: new SnakeCaseLogJsonFormatter(),
-                        path: logOptions.LogFilePath,
-                        rollingInterval: RollingInterval.Day,
-                        fileSizeLimitBytes: logOptions.LogFileSizeLimitBytes
-                    )
-                );
-});
+    builder.Services.AddTelemetry(telemetryOptions);
+}
+builder.Host.ConfigureSerilog(telemetryOptions);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
@@ -80,10 +62,9 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IClaimsTransformation, KeycloakClaimsTransformer>();
-builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-builder.Services.AddScoped<ISessionService, SessionService>();
-builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
-builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+
+builder.Services.AddEnrollments();
+builder.Services.AddSessions();
 
 var app = builder.Build();
 
@@ -92,9 +73,11 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors();
 app.UseMiddleware<LoggingMiddleware>();
 app.UseSerilogRequestLogging();
+app.MapPrometheusScrapingEndpoint();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapSessionEndpoints();
 app.MapEnrollmentEndpoints();
 
 app.Run();
+
