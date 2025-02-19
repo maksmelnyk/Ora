@@ -19,16 +19,26 @@
             <totalSizeCap>${PROFILE_LOG_FILE_SIZE:-500MB}</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
-        <encoder class="com.example.profile.logging.LogJsonEncoder" />
+        <encoder class="com.example.profile.middlewares.logging.LogJsonEncoder" />
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>${PROFILE_LOG_LEVEL:-INFO}</level>
         </filter>
+    </appender>
+
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <captureExperimentalAttributes>false</captureExperimentalAttributes>
+        <captureCodeAttributes>true</captureCodeAttributes>
+        <captureMarkerAttribute>true</captureMarkerAttribute>
+        <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
+        <captureLoggerContext>true</captureLoggerContext>
+        <captureMdcAttributes>*</captureMdcAttributes>
     </appender>
 
     <!-- Root Logger -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
+        <appender-ref ref="OTEL" />
     </root>
 
     <logger name="org.springframework" level="INFO" additivity="false">
@@ -36,6 +46,7 @@
     </logger>
     <logger name="org.springframework" level="WARN" additivity="false">
         <appender-ref ref="FILE" />
+        <appender-ref ref="OTEL" />
     </logger>
 
     <logger name="org.hibernate" level="INFO" additivity="false">
@@ -43,6 +54,7 @@
     </logger>
     <logger name="org.hibernate" level="WARN" additivity="false">
         <appender-ref ref="FILE" />
+        <appender-ref ref="OTEL" />
     </logger>
 
     <logger name="org.apache" level="INFO" additivity="false">
@@ -50,6 +62,7 @@
     </logger>
     <logger name="org.apache" level="WARN" additivity="false">
         <appender-ref ref="FILE" />
+        <appender-ref ref="OTEL" />
     </logger>
 
     <logger name="com.zaxxer" level="INFO" additivity="false">
@@ -57,6 +70,7 @@
     </logger>
     <logger name="com.zaxxer" level="WARN" additivity="false">
         <appender-ref ref="FILE" />
+        <appender-ref ref="OTEL" />
     </logger>
 
 </configuration>
