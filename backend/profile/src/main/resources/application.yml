@@ -17,9 +17,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "${KEYCLOAK_ISSUER_URI}"
+          jwk-set-uri: "${KEYCLOAK_JWKS_URI}"
+          issuer: "${KEYCLOAK_ISSUER_URI}"
   rabbitmq:
-    host: localhost
+    host: ${RABBITMQ_HOST}
     port: "${RABBITMQ_PORT}"
     username: "${RABBITMQ_USER}"
     password: "${RABBITMQ_PASS}"

@@ -1,0 +1,30 @@
+@base_url = https://localhost/auth/api/v1/auth
+@profile_base_url = https://localhost/profile/api/v1/user-profiles
+@learning_base_url = https://localhost/learning/api/v1/sessions
+@schedule_base_url = https://localhost/scheduling/api/v1/schedules
+@payment_base_url = https://localhost/payment/api/v1/payments
+
+
+###
+# @name auth
+POST https://localhost/realms/coursio/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+username=teacher1@mail.com&password=password&grant_type=password&client_id=payment-service&scope=openid
+
+
+###
+GET {{profile_base_url}}/me
+Authorization: Bearer {{auth.response.body.access_token}}
+
+###
+GET {{learning_base_url}}/my?skip=0&take=10
+Authorization: Bearer {{auth.response.body.access_token}}
+
+###
+GET {{schedule_base_url}}/76df65b1-0919-4d7b-9b82-4c58b27ad578/schedule?fromDate=2025-01-11&toDate=2025-01-15
+Authorization: Bearer {{auth.response.body.access_token}}
+
+###
+GET {{payment_base_url}}/my?skip=0&take=10
+Authorization: Bearer {{auth.response.body.access_token}}

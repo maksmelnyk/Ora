@@ -60,7 +60,7 @@ func main() {
 		otelhttp.WithMeterProvider(otel.GetMeterProvider()),
 	))
 	r.Use(middleware.LoggingMiddleware(tel.Logger))
-	r.Use(middleware.AuthMiddleware(validator))
+	r.Use(middleware.AuthMiddleware(validator, tel.Logger))
 
 	r.Mount("/api/v1/schedules", schedule.InitializeScheduleModule(tel.Logger, db))
 	r.Mount("/api/v1/bookings", booking.InitializeBookingModule(tel.Logger, db))

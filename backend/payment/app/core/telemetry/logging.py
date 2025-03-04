@@ -98,7 +98,7 @@ def setup_logging(resource: Resource, stg: LogSettings, otel_endpoint: str) -> N
     logger.add(
         sys.stdout,
         colorize=True,
-        level=stg.level,
+        level="INFO",
         enqueue=True,
         backtrace=True,
         catch=True,

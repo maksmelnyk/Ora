@@ -1,0 +1,297 @@
+services:
+  postgres:
+    container_name: pg_db
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-13795}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  pgadmin:
+    container_name: pg_admin
+    image: dpage/pgadmin4:9.0.0
+    restart: unless-stopped
+    environment:
+      SCRIPT_NAME: ${PGADMIN_SCRIPT_NAME:-/pgadmin}
+      PGADMIN_LISTEN_PORT: ${PGADMIN_PORT:-5050}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    networks:
+      - microservices-net
+    depends_on:
+      - postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:26.1.2
+    restart: unless-stopped
+    environment:
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_DB: postgres
+      KC_DB_URL_HOST: ${POSTGRES_HOST:-postgres}
+      KC_DB_URL_DATABASE: ${KEYCLOAK_DB_NAME:-keycloak}
+      KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-13795}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    command: [ "start-dev", "--import-realm" ]
+    depends_on:
+      - postgres
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.0.4-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
+    volumes:
+      - rabbit_mq:/var/lib/rabbitmq/mnesia
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q status || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    restart: unless-stopped
+    command: [ "--config=/etc/otel-collector-config.yaml" ]
+    volumes:
+      - ./configs/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:13133/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.2.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
+    volumes:
+      - ./configs/prometheus.yaml:/etc/prometheus.yaml
+      - prometheus-data:/var/lib/prometheus
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9090/-/healthy || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  loki:
+    container_name: loki
+    image: grafana/loki:3.4.2
+    restart: unless-stopped
+    command: -config.file=/etc/loki-config.yaml -config.expand-env=true
+    volumes:
+      - loki-data:/var/lib/loki
+      - ./configs/loki.yaml:/etc/loki-config.yaml:ro
+    networks:
+      - microservices-net
+    user: root
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3100/ready || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo:main-eb960ce
+    restart: unless-stopped
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - tempo-data:/var/lib/tempo
+      - ./configs/tempo.yaml:/etc/tempo.yaml:ro
+    networks:
+      - microservices-net
+    user: root
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3200/ready || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:11.5.2
+    restart: unless-stopped
+    volumes:
+      - ./configs/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    container_name: nginx_gateway
+    restart: unless-stopped
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - keycloak
+      - rabbitmq
+      - pgadmin
+      - auth
+      - profile
+      - learning
+      - scheduling
+      - payment
+    environment:
+      - SERVER_NAME=${NGINX_SERVER_NAME}
+      - SSL_CERTIFICATE=${NGINX_SSL_CERTIFICATE}
+      - SSL_CERTIFICATE_KEY=${NGINX_SSL_CERTIFICATE_KEY}
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  auth:
+    container_name: auth
+    restart: unless-stopped
+    build: ./backend/auth
+    env_file:
+      - .env.docker
+    depends_on:
+      - postgres
+      - keycloak
+      - rabbitmq
+    networks:
+      - microservices-net
+
+  profile:
+    container_name: profile
+    restart: unless-stopped
+    build: ./backend/profile
+    env_file:
+      - .env.docker
+    depends_on:
+      - postgres
+      - keycloak
+      - rabbitmq
+    networks:
+      - microservices-net
+
+  learning:
+    container_name: learning
+    restart: unless-stopped
+    build: ./backend/learning
+    env_file:
+      - .env.docker
+    depends_on:
+      - postgres
+      - keycloak
+      - rabbitmq
+    networks:
+      - microservices-net
+
+  scheduling:
+    container_name: scheduling
+    restart: unless-stopped
+    build: ./backend/scheduling
+    env_file:
+      - .env.docker
+    depends_on:
+      - postgres
+      - keycloak
+      - rabbitmq
+    networks:
+      - microservices-net
+
+  payment:
+    container_name: payment
+    restart: unless-stopped
+    build: ./backend/payment
+    env_file:
+      - .env.docker
+    depends_on:
+      - postgres
+      - keycloak
+      - rabbitmq
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  postgres:
+    name: postgres
+  pgadmin:
+    name: pgadmin
+  rabbit_mq:
+    name: rabbit_mq
+  prometheus-data:
+    name: prometheus-data
+  grafana-data:
+    name: grafana-data
+  tempo-data:
+    name: tempo-data
+  loki-data:
+    name: loki-data

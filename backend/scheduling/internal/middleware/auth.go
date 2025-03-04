@@ -2,13 +2,15 @@ package middleware
 
 import (
 	"context"
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
-	hh "github.com/maksmelnyk/scheduling/internal/http"
 	"net/http"
 	"strings"
 
+	ec "github.com/maksmelnyk/scheduling/internal/errors"
+	hh "github.com/maksmelnyk/scheduling/internal/http"
+
 	"github.com/google/uuid"
 	"github.com/maksmelnyk/scheduling/internal/auth"
+	"github.com/maksmelnyk/scheduling/internal/logger"
 )
 
 type userClaimsKey string
@@ -18,7 +20,7 @@ const UserIdKey userIdKey = "user_id"
 const UserRolesKey userClaimsKey = "user_roles"
 
 // AuthMiddleware validates JWT tokens
-func AuthMiddleware(validator *auth.JWTValidator) func(next http.Handler) http.Handler {
+func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -35,12 +37,14 @@ func AuthMiddleware(validator *auth.JWTValidator) func(next http.Handler) http.H
 
 			claims, err := validator.ValidateToken(tokenString)
 			if err != nil {
+				log.Error("invalid token", err)
 				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "invalid token"))
 				return
 			}
 
 			userId, err := uuid.Parse(claims["sub"].(string))
 			if err != nil {
+				log.Error("invalid user id", err)
 				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "invalid user id"))
 				return
 			}

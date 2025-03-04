@@ -80,4 +80,3 @@ app.MapSessionEndpoints();
 app.MapEnrollmentEndpoints();
 
 app.Run();
-

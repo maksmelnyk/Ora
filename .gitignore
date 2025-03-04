@@ -1,3 +1,5 @@
 *.ps1
-*.env
+*.env*
 .vscode/
+nginx/certs/
+dev/
