@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/maksmelnyk/scheduling/internal/auth"
+	"github.com/maksmelnyk/scheduling/internal/middleware"
 )
 
 func Routes(handler *BookingHandler) http.Handler {
@@ -11,7 +13,8 @@ func Routes(handler *BookingHandler) http.Handler {
 
 	// Define routes
 	r.Post("/", handler.AddBooking)
-	r.Post("/{id}/status/{status}", handler.UpdateBookingStatus)
+	r.With(middleware.RoleAuthMiddleware(auth.EducatorRole)).Post("/{id}/confirm", handler.ConfirmBooking)
+	r.With(middleware.RoleAuthMiddleware(auth.EducatorRole)).Post("/{id}/cancel", handler.CancelBooking)
 
 	return r
 }
