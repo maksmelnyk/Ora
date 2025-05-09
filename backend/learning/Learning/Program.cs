@@ -1,9 +1,13 @@
 using FluentValidation;
 using Learning.Data;
+using Learning.Features.Categories;
 using Learning.Features.Enrollments;
-using Learning.Features.Sessions;
+using Learning.Features.Products;
+using Learning.Features.Profiles;
 using Learning.Infrastructure.Identity;
 using Learning.Infrastructure.Keycloak;
+using Learning.Infrastructure.Messaging.RabbitMq;
+using Learning.Infrastructure.OpenApi;
 using Learning.Infrastructure.Telemetry;
 using Learning.Middlewares;
 using Microsoft.AspNetCore.Authentication;
@@ -19,6 +23,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddCors();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddOpenApi(o => { o.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 var telemetryOptions = builder.Configuration.GetSection(nameof(TelemetryOptions)).Get<TelemetryOptions>();
 ArgumentNullException.ThrowIfNull(telemetryOptions);
@@ -53,20 +58,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(AuthorizationPolicies.RequireTeacherRole, p => p.RequireClaim(ClaimTypes.Role, KeycloakRoles.TeacherRole))
+    .AddPolicy(AuthorizationPolicies.RequireEducatorRole, p => p.RequireClaim(ClaimTypes.Role, KeycloakRoles.EducatorRole))
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
-builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
 
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+builder.Services.AddRabbitMq(builder.Configuration);
 
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IClaimsTransformation, KeycloakClaimsTransformer>();
 
 builder.Services.AddEnrollments();
-builder.Services.AddSessions();
+builder.Services.AddProducts();
+builder.Services.AddProfiles();
+builder.Services.AddCategories();
 
 var app = builder.Build();
+
+const string openApiUrl = "/openapi/v1/openapi.json";
+// TODO: temporary allow OpenAPI docs APIs
+app.MapOpenApi(openApiUrl).AllowAnonymous();
+app.UseSwaggerUI(o => { o.SwaggerEndpoint(openApiUrl, "v1"); });
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -76,7 +92,8 @@ app.UseSerilogRequestLogging();
 app.MapPrometheusScrapingEndpoint();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapSessionEndpoints();
+app.MapCategoryEndpoints();
+app.MapProductEndpoints();
 app.MapEnrollmentEndpoints();
 
 app.Run();

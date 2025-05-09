@@ -30,6 +30,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         {
             await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.BadRequest);
         }
+        catch (ForbiddenException ex)
+        {
+            await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.Forbidden);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Request failed: ");

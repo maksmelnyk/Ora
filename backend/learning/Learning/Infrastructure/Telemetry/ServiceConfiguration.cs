@@ -7,7 +7,7 @@ using Serilog.Events;
 
 namespace Learning.Infrastructure.Telemetry;
 
-public static class Extensions
+public static class ServiceConfiguration
 {
     public static void ConfigureSerilog(this ConfigureHostBuilder hostBuilder, TelemetryOptions telemetryOptions)
     {
