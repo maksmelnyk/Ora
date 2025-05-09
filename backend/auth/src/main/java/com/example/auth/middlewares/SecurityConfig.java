@@ -13,8 +13,9 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        a -> a.requestMatchers("/api/v1/auth/register").permitAll().anyRequest().authenticated());
+                .authorizeHttpRequests( // TODO: temporary allow OpenAPI docs APIs
+                        a -> a.requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**")
+                                .permitAll().anyRequest().authenticated());
 
         return http.build();
     }
