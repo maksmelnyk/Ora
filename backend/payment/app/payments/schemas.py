@@ -1,16 +1,17 @@
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator
-from typing import Dict, Type, Any, Callable
+from typing import Dict, Optional, Type, Any, Callable
 
 
 class PaymentCreateRequest(BaseModel):
-    session_id: int = Field(alias="sessionId")
+    product_id: int = Field(alias="productId")
+    scheduled_event_id: Optional[int] = Field(alias="scheduledEventId")
     provider_id: int = Field(alias="providerId")
 
-    @field_validator("session_id", "provider_id") 
-    def must_be_greater_than_zero(cls, value: int) -> int: 
-        if value <= 0: 
-            raise ValueError("Must be greater than zero") 
+    @field_validator("product_id", "provider_id")
+    def must_be_greater_than_zero(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("Must be greater than zero")
         return value
 
     class Config:
@@ -19,7 +20,7 @@ class PaymentCreateRequest(BaseModel):
 
 class PaymentResponse(BaseModel):
     id: int = Field(alias="id")
-    amount: Decimal = Field(alias="amount")
+    price: Decimal = Field(alias="price")
     currency: str = Field(alias="currency")
     status: str = Field(alias="status")
 

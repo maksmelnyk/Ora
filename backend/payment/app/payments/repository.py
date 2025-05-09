@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any, List, Tuple
 from uuid import UUID
-from sqlalchemy import CursorResult, Result, Select, Update, update, exists
+from sqlalchemy import CursorResult, Result, Select, Update, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -25,12 +25,12 @@ class PaymentRepository(BaseRepository):
         result: Result[Tuple[Transaction]] = await self.session.execute(statement=query)
         return list(result.scalars().all())
 
-    async def transaction_exists(self, transaction_id: int) -> bool:
-        stmt: Select[Tuple[bool]] = select(
-            exists().where(Transaction.id == transaction_id)
+    async def get_transaction_by_id(self, transaction_id: int) -> Transaction | None:
+        stmt: Select[Tuple[Transaction]] = select(Transaction).where(
+            Transaction.id == transaction_id
         )
-        result: Result[Tuple[bool]] = await self.session.execute(statement=stmt)
-        return bool(result.scalar())
+        result: Result[Tuple[Transaction]] = await self.session.execute(statement=stmt)
+        return result.scalar()
 
     async def create_transaction(self, transaction: Transaction) -> int:
         transaction.created_at = datetime.now(tz=timezone.utc)

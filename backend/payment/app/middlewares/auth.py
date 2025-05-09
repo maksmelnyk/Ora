@@ -14,13 +14,23 @@ from app.exceptions.exception_handlers import error_json_response
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: ASGIApp, validator: TokenValidator) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        validator: TokenValidator,
+    ) -> None:
         super().__init__(app=app)
         self.validator: TokenValidator = validator
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+
+        # TODO: temporary allow OpenAPI docs APIs
+        public_apis: list[str] = ["/docs", "/openapi.json"]
+        if request.url.path in public_apis:
+            return await call_next(request)
+
         try:
             token: str | None = request.headers.get("Authorization")
             if not token or not token.startswith("Bearer "):

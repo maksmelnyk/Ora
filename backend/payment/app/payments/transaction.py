@@ -1,4 +1,5 @@
 import enum
+from typing import Optional
 
 from sqlalchemy import String, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
@@ -20,10 +21,11 @@ class Transaction(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[UUID] = mapped_column(nullable=False)
-    session_id: Mapped[int] = mapped_column(nullable=False)
+    product_id: Mapped[int] = mapped_column(nullable=False)
+    scheduled_event_id: Mapped[Optional[int]] = mapped_column(nullable=True)
     provider_id: Mapped[int] = mapped_column(nullable=False)
     provider_reference_id: Mapped[str] = mapped_column(nullable=False)
-    amount: Mapped[Decimal] = mapped_column(nullable=False)
+    price: Mapped[Decimal] = mapped_column(nullable=False)
     currency: Mapped[str] = mapped_column(nullable=False)
     status: Mapped[TransactionStatus] = mapped_column(
         __name_pos=String, default=TransactionStatus.PENDING
