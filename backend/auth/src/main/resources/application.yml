@@ -7,14 +7,20 @@ spring:
     port: "${RABBITMQ_PORT}"
     username: "${RABBITMQ_USER}"
     password: "${RABBITMQ_PASS}"
+    virtual-host: "${RABBITMQ_VHOST}"
     listener:
       simple:
         retry:
           enabled: true
           initial-interval: 1000
-          max-attempts: 3
-          multiplier: 1.0
           max-interval: 10000
+          multiplier: 2.0
+          max-attempts: 3
+        default-requeue-rejected: false
+        acknowledge-mode: manual
+    publisher-confirm-type: correlated
+    publisher-returns: true
+  
 app:
   keycloak:
     url: "${KEYCLOAK_URL}"
@@ -25,10 +31,6 @@ app:
     adminUsername: "${KEYCLOAK_ADMIN_USER}"
     adminPassword: "${KEYCLOAK_ADMIN_PASSWORD}"
   rabbitmq:
-    userExchange: "${USER_CREATION_EXCHANGE}"
-    userCreatedRoutingKey: "${USER_CREATED_ROUTING_KEY}"
-    userCreatedQueue: "${USER_CREATED_QUEUE}"
-    userResponseQueue: "${USER_RESPONSE_QUEUE}"
-    teacherExchange: "${TEACHER_EXCHANGE}"
-    teacherCreatedQueue: "${TEACHER_CREATED_QUEUE}"
-    teacherCreatedRoutingKey: "${TEACHER_CREATED_ROUTING_KEY}"
+    exchange: ${RABBITMQ_EXCHANGE:user-service-exchange}
+    dlq-exchange: ${RABBITMQ_DLQ_EXCHANGE:dead-letter-exchange}
+    message-ttl: ${RABBITMQ_MESSAGE_TTL:30000}
