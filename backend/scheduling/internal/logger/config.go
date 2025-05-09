@@ -18,14 +18,14 @@ import (
 
 type Logger interface {
 	Error(message string, err ...error)
-	Errorf(format string, args ...interface{})
+	Errorf(format string, args ...any)
 	Panic(message string, fields ...Field)
-	Panicf(format string, args ...interface{})
+	Panicf(format string, args ...any)
 	Info(message string, fields ...Field)
-	Infof(format string, args ...interface{})
+	Infof(format string, args ...any)
 	Warn(message string, fields ...Field)
-	Warnf(format string, args ...interface{})
-	Debugf(format string, args ...interface{})
+	Warnf(format string, args ...any)
+	Debugf(format string, args ...any)
 	With(fields ...Field) Logger
 }
 
@@ -35,7 +35,7 @@ const loggerKey ctxKey = "logger"
 
 type Field struct {
 	Key   string
-	Value interface{}
+	Value any
 }
 
 var _ Logger = (*AppLogger)(nil)
@@ -106,7 +106,7 @@ func (l *AppLogger) Error(message string, err ...error) {
 	}
 }
 
-func (l *AppLogger) Errorf(format string, args ...interface{}) {
+func (l *AppLogger) Errorf(format string, args ...any) {
 	l.logger.Error(fmt.Sprintf(format, args...))
 }
 
@@ -114,7 +114,7 @@ func (l *AppLogger) Panic(message string, fields ...Field) {
 	l.logger.Panic(message, mapToZapFields(fields)...)
 }
 
-func (l *AppLogger) Panicf(format string, args ...interface{}) {
+func (l *AppLogger) Panicf(format string, args ...any) {
 	l.logger.Panic(fmt.Sprintf(format, args...))
 }
 
@@ -122,7 +122,7 @@ func (l *AppLogger) Info(message string, fields ...Field) {
 	l.logger.Info(message, mapToZapFields(fields)...)
 }
 
-func (l *AppLogger) Infof(format string, args ...interface{}) {
+func (l *AppLogger) Infof(format string, args ...any) {
 	l.logger.Info(fmt.Sprintf(format, args...))
 }
 
@@ -130,11 +130,15 @@ func (l *AppLogger) Warn(message string, fields ...Field) {
 	l.logger.Info(message, mapToZapFields(fields)...)
 }
 
-func (l *AppLogger) Warnf(format string, args ...interface{}) {
+func (l *AppLogger) Warnf(format string, args ...any) {
 	l.logger.Warn(fmt.Sprintf(format, args...))
 }
 
-func (l *AppLogger) Debugf(format string, args ...interface{}) {
+func (l *AppLogger) Debug(message string, fields ...Field) {
+	l.logger.Debug(message, mapToZapFields(fields)...)
+}
+
+func (l *AppLogger) Debugf(format string, args ...any) {
 	l.logger.Debug(fmt.Sprintf(format, args...))
 }
 

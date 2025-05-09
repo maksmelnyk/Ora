@@ -6,7 +6,7 @@ import (
 )
 
 // WriteJson writes a JSON response with the given status code and data
-func WriteJson(w http.ResponseWriter, status int, data interface{}) {
+func WriteJson(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(data)

@@ -19,8 +19,8 @@ func NewJWTValidator(jwkManager *JWKManager, issuer, audience string) *JWTValida
 }
 
 // ValidateToken validates a JWT token using the JWKManager
-func (v *JWTValidator) ValidateToken(tokenString string) (map[string]interface{}, error) {
-	x := func(token *jwt.Token) (interface{}, error) {
+func (v *JWTValidator) ValidateToken(tokenString string) (map[string]any, error) {
+	x := func(token *jwt.Token) (any, error) {
 		kid, ok := token.Header["kid"].(string)
 		if !ok {
 			return nil, errors.New("kid header is missing")
