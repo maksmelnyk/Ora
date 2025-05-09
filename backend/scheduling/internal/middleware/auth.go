@@ -23,6 +23,17 @@ const UserRolesKey userClaimsKey = "user_roles"
 func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// TODO: temporary allow OpenAPI docs APIs
+			publicRoutes := []string{
+				"/swagger",
+			}
+			for _, route := range publicRoutes {
+				if strings.HasPrefix(r.URL.Path, route) {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "missing authorization header"))
@@ -51,9 +62,9 @@ func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(ne
 
 			ctx := context.WithValue(r.Context(), UserIdKey, userId)
 
-			realmAccess, ok := claims["realm_access"].(map[string]interface{})
+			realmAccess, ok := claims["realm_access"].(map[string]any)
 			if ok {
-				roles, ok := realmAccess["roles"].([]interface{})
+				roles, ok := realmAccess["roles"].([]any)
 				if ok {
 					ctx = context.WithValue(ctx, UserRolesKey, roles)
 				}
@@ -68,7 +79,7 @@ func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(ne
 func RoleAuthMiddleware(requiredRole string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			roles, ok := r.Context().Value(UserRolesKey).([]interface{})
+			roles, ok := r.Context().Value(UserRolesKey).([]any)
 			if !ok {
 				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "unauthorized"))
 				return

@@ -95,12 +95,8 @@ func convertJWKToPublicKey(jwk JWK) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("failed to decode exponent: %w", err)
 	}
 
-	n := new(big.Int).SetBytes(nBytes)
-
-	e := int(new(big.Int).SetBytes(eBytes).Uint64())
-
 	return &rsa.PublicKey{
-		N: n,
-		E: e,
+		N: new(big.Int).SetBytes(nBytes),
+		E: int(new(big.Int).SetBytes(eBytes).Uint64()),
 	}, nil
 }

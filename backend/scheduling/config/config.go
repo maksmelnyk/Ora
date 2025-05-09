@@ -11,6 +11,8 @@ type Config struct {
 	Keycloak  KeycloakConfig
 	Log       LogConfig
 	Telemetry TelemetryConfig
+	RabbitMq  RabbitMqConfig
+	External  ExternalServiceConfig
 }
 
 type ServerConfig struct {
@@ -49,6 +51,28 @@ type TelemetryConfig struct {
 	EnableOtelTracing bool
 	EnableOtelMetrics bool
 	EnableOtelLogging bool
+}
+
+type RabbitMqConfig struct {
+	HostName                string
+	Port                    int
+	VirtualHost             string
+	UserName                string
+	Password                string
+	Exchange                string
+	DeadLetterExchange      string
+	MessageTTL              int
+	RetryCount              int
+	InitialRetryIntervalMs  int
+	MaxRetryIntervalMs      int
+	RetryMultiplier         float64
+	PrefetchCount           int
+	PublishConfirmTimeoutMs int
+	ConcurrentConsumers     int
+}
+
+type ExternalServiceConfig struct {
+	LearningServiceUrl string
 }
 
 func GetEnvWithDefault[T any](key string, defaultValue T) T {
@@ -125,5 +149,27 @@ func LoadConfig() Config {
 		EnableOtelLogging: GetEnvWithDefault("SCHEDULING_OTEL_LOGGING", true),
 	}
 
-	return Config{serverConfig, postgresConfig, keycloakConfig, logConfig, telemetryConfig}
+	rabbitMqConfig := RabbitMqConfig{
+		HostName:                GetEnvWithDefault("RABBITMQ_HOST", "localhost"),
+		Port:                    GetEnvWithDefault("RABBITMQ_PORT", 5672),
+		VirtualHost:             GetEnvWithDefault("RABBITMQ_VHOST", "/"),
+		UserName:                GetEnvWithDefault("RABBITMQ_USER", "guest"),
+		Password:                GetEnvWithDefault("RABBITMQ_PASS", "guest"),
+		Exchange:                GetEnvWithDefault("RABBITMQ_EXCHANGE", ""),
+		DeadLetterExchange:      GetEnvWithDefault("RABBITMQ_DLQ_EXCHANGE", ""),
+		MessageTTL:              GetEnvWithDefault("RABBITMQ_MESSAGE_TTL", 30000),
+		RetryCount:              GetEnvWithDefault("RABBITMQ_RETRY_COUNT", 3),
+		InitialRetryIntervalMs:  GetEnvWithDefault("RABBITMQ_INITIAL_RETRY_INTERVAL", 1000),
+		MaxRetryIntervalMs:      GetEnvWithDefault("RABBITMQ_MAX_RETRY_INTERVAL", 10000),
+		RetryMultiplier:         GetEnvWithDefault("RABBITMQ_RETRY_MULTIPLIER", 2.0),
+		PrefetchCount:           GetEnvWithDefault("RABBITMQ_PREFETCH_COUNT", 10),
+		PublishConfirmTimeoutMs: GetEnvWithDefault("RABBITMQ_PUBLISH_CONFIRM_TIMEOUT", 5000),
+		ConcurrentConsumers:     GetEnvWithDefault("RABBITMQ_CONCURRENT_CONSUMERS", 3),
+	}
+
+	externalServiceConfig := ExternalServiceConfig{
+		LearningServiceUrl: GetEnvWithDefault("LEARNING_URL", ""),
+	}
+
+	return Config{serverConfig, postgresConfig, keycloakConfig, logConfig, telemetryConfig, rabbitMqConfig, externalServiceConfig}
 }

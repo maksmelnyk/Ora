@@ -7,7 +7,7 @@ import (
 	ec "github.com/maksmelnyk/scheduling/internal/errors"
 )
 
-// RestError Rest error struct
+// swagger:model RestError
 type RestError struct {
 	Status     int
 	ErrCode    string
@@ -70,6 +70,8 @@ func ParseError(err error) *RestError {
 		return NewBadRequestError(ec.ErrBookingConflict.Error(), "Working period conflicts with existing booking")
 	case errors.Is(err, ec.ErrBookingNotFound):
 		return NewNotFoundError(ec.ErrBookingNotFound.Error(), "Booking not found")
+	case errors.Is(err, ec.ErrBookingAlreadyExists):
+		return NewBadRequestError(ec.ErrBookingAlreadyExists.Error(), "Booking already exists")
 	case errors.Is(err, ec.ErrBookingStatusInvalid):
 		return NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Invalid booking status")
 	case errors.Is(err, ec.ErrScheduleEventNotFound):

@@ -8,6 +8,7 @@ var (
 	ErrUserIdNotFound                   = errors.New("ERROR_USER_ID_NOT_FOUND")
 	ErrAuthFailed                       = errors.New("ERROR_AUTHORIZATION_FAILED")
 	ErrBookingNotFound                  = errors.New("ERROR_BOOKING_NOT_FOUND")
+	ErrBookingAlreadyExists             = errors.New("ERROR_BOOKING_ALREADY_EXISTS")
 	ErrBookingConflict                  = errors.New("ERROR_BOOKING_CONFLICT")
 	ErrBookingStatusInvalid             = errors.New("ERROR_BOOKING_STATUS_INVALID")
 	ErrBookingStatusUpdateRestricted    = errors.New("ERROR_BOOKING_STATUS_UPDATE_RESTRICTED")

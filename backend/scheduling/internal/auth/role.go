@@ -2,6 +2,6 @@ package auth
 
 var (
 	UserRole    = "ROLE_USER"
-	TeacherRole = "ROLE_TEACHER"
+	EducatorRole = "ROLE_EDUCATOR"
 	AdminRole   = "ROLE_ADMIN"
 )
