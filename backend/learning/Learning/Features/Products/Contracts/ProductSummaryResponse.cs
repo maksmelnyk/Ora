@@ -1,0 +1,21 @@
+using Learning.Data.Entities;
+using Learning.Features.Profiles;
+
+namespace Learning.Features.Products.Contracts;
+
+public record ProductSummaryResponse(
+    long Id,
+    long SubCategoryId,
+    Guid EducatorId,
+    ProductType Type,
+    ProductStatus Status,
+    string Title,
+    string Description,
+    string ImageUrl,
+    decimal Price,
+    int? DurationMin,
+    int? MaxParticipants,
+    DateTime? StartDate,
+    DateTime? EndDate,
+    EducatorResponse Educator
+);

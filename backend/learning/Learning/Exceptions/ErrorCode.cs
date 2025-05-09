@@ -1,6 +1,7 @@
 namespace Learning.Exceptions;
 
-public static class ErrorCode 
+public static class ErrorCode
 {
-    public const string SessionNotFound = "SESSION_NOT_FOUND";
+    public const string AccessDenied = "ACCESS_DENIED";
+    public const string ResourceNotFound = "RESOURCE_NOT_FOUND";
 }
