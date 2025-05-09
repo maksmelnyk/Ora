@@ -62,12 +62,43 @@ class TelemetrySettings:
     enable_otel_logging: str = get_env_var("PAYMENT_OTEL_LOGGING", default=True)
 
 
+class RabbitMqSettings:
+    host: str = get_env_var("RABBITMQ_HOST", default="localhost")
+    port: int = get_env_var("RABBITMQ_PORT", default=5672)
+    username: str = get_env_var("RABBITMQ_USER", default="guest")
+    password: str = get_env_var("RABBITMQ_PASS", default="guest")
+    virtual_host: str = get_env_var("RABBITMQ_VHOST", default="/")
+    exchange: str = get_env_var("RABBITMQ_EXCHANGE", default="payment-service-exc")
+    dead_letter_exchange: str = get_env_var("RABBITMQ_DLQ_EXCHANGE", default="dlq-exc")
+    message_ttl: int = get_env_var("RABBITMQ_MESSAGE_TTL", default=30000)
+    retry_count: int = get_env_var("RABBITMQ_RETRY_COUNT", default=3)
+    initial_retry_interval_ms: int = get_env_var(
+        "RABBITMQ_INITIAL_RETRY_INTERVAL_MS", default=1000
+    )
+    max_retry_interval_ms: int = get_env_var(
+        "RABBITMQ_MAX_RETRY_INTERVAL_MS", default=10000
+    )
+    retry_multiplier: float = get_env_var("RABBITMQ_RETRY_MULTIPLIER", default=2.0)
+    concurrent_consumers: int = get_env_var("RABBITMQ_CONCURRENT_CONSUMERS", default=1)
+    prefetch_count: int = get_env_var("RABBITMQ_PREFETCH_COUNT", default=10)
+    publisher_confirm_timeout_ms: int = get_env_var(
+        "RABBITMQ_PUBLISHER_CONFIRM_TIMEOUT_MS", default=1000
+    )
+
+
+class ExternalServiceSettings:
+    learning_service_url: str = get_env_var(name="LEARNING_URL", default="")
+    scheduling_service_url: str = get_env_var(name="SCHEDULING_URL", default="")
+
+
 class Settings:
     app: AppSettings = AppSettings()
     db: DatabaseSettings = DatabaseSettings()
     keycloak: KeycloakSettings = KeycloakSettings()
     log: LogSettings = LogSettings()
     telemetry: TelemetrySettings = TelemetrySettings()
+    rabbitmq: RabbitMqSettings = RabbitMqSettings()
+    external_services: ExternalServiceSettings = ExternalServiceSettings()
 
 
 settings = Settings()
