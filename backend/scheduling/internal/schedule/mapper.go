@@ -6,30 +6,31 @@ import (
 	"github.com/google/uuid"
 
 	en "github.com/maksmelnyk/scheduling/internal/database/entities"
-	con "github.com/maksmelnyk/scheduling/internal/schedule/contracts"
 )
 
-func MapWorkingPeriodToResponse(wp *en.WorkingPeriod) *con.WorkingPeriodResponse {
-	return &con.WorkingPeriodResponse{
+func MapWorkingPeriodToResponse(wp *en.WorkingPeriod) *WorkingPeriodResponse {
+	return &WorkingPeriodResponse{
 		Id:        wp.Id,
-		Date:      wp.Date,
 		StartTime: wp.StartTime,
 		EndTime:   wp.EndTime,
 	}
 }
 
-func MapWorkingPeriodsToResponse(wps []*en.WorkingPeriod) []*con.WorkingPeriodResponse {
-	response := make([]*con.WorkingPeriodResponse, len(wps))
+func MapWorkingPeriodsToResponse(wps []*en.WorkingPeriod) []*WorkingPeriodResponse {
+	if len(wps) == 0 {
+		return []*WorkingPeriodResponse{}
+	}
+
+	response := make([]*WorkingPeriodResponse, len(wps))
 	for i, wd := range wps {
 		response[i] = MapWorkingPeriodToResponse(wd)
 	}
 	return response
 }
 
-func MapRequestToWorkingPeriod(userId uuid.UUID, wpr *con.WorkingPeriodRequest) *en.WorkingPeriod {
+func MapRequestToWorkingPeriod(userId uuid.UUID, wpr *WorkingPeriodRequest) *en.WorkingPeriod {
 	return &en.WorkingPeriod{
 		UserId:    userId,
-		Date:      wpr.Date,
 		StartTime: wpr.StartTime,
 		EndTime:   wpr.EndTime,
 		CreatedAt: time.Now().UTC(),
@@ -37,16 +38,18 @@ func MapRequestToWorkingPeriod(userId uuid.UUID, wpr *con.WorkingPeriodRequest) 
 	}
 }
 
-func MapRequestWithWorkingPeriod(wpr *con.WorkingPeriodRequest, wp *en.WorkingPeriod) {
+func MapRequestWithWorkingPeriod(wpr *WorkingPeriodRequest, wp *en.WorkingPeriod) {
 	wp.StartTime = wpr.StartTime
 	wp.EndTime = wpr.EndTime
 	wp.UpdatedAt = time.Now().UTC()
 }
 
-func MapScheduledEventToResponse(se *en.ScheduledEvent) *con.ScheduledEventResponse {
-	return &con.ScheduledEventResponse{
+func MapScheduledEventToResponse(se *en.ScheduledEvent) *ScheduledEventResponse {
+	return &ScheduledEventResponse{
 		Id:              se.Id,
-		SessionId:       se.SessionId,
+		ProductId:       se.ProductId,
+		LessonId:        se.LessonId,
+		Title:           se.Title,
 		WorkingPeriodId: se.WorkingPeriodId,
 		StartTime:       se.StartTime,
 		EndTime:         se.EndTime,
@@ -54,42 +57,60 @@ func MapScheduledEventToResponse(se *en.ScheduledEvent) *con.ScheduledEventRespo
 	}
 }
 
-func MapScheduledEventsToResponse(ses []*en.ScheduledEvent) []*con.ScheduledEventResponse {
-	response := make([]*con.ScheduledEventResponse, len(ses))
+func MapScheduledEventsToResponse(ses []*en.ScheduledEvent) []*ScheduledEventResponse {
+	if len(ses) == 0 {
+		return []*ScheduledEventResponse{}
+	}
+
+	response := make([]*ScheduledEventResponse, len(ses))
 	for i, se := range ses {
 		response[i] = MapScheduledEventToResponse(se)
 	}
 	return response
 }
 
-func MapRequestToScheduledEvent(ser *con.ScheduledEventRequest, userId uuid.UUID, workingPeriodId int64) *en.ScheduledEvent {
+func MapRequestToScheduledEvent(
+	ser *ScheduledEventRequest,
+	userId uuid.UUID,
+	workingPeriodId int64,
+	title string,
+	maxParticipants int,
+) *en.ScheduledEvent {
 	return &en.ScheduledEvent{
-		SessionId:       ser.SessionId,
+		ProductId:       ser.ProductId,
+		LessonId:        ser.LessonId,
 		WorkingPeriodId: workingPeriodId,
 		UserId:          userId,
+		Title:           title,
+		MaxParticipants: maxParticipants,
 		StartTime:       ser.StartTime,
 		EndTime:         ser.EndTime,
-		MaxParticipants: ser.MaxParticipants,
 		CreatedAt:       time.Now().UTC(),
 		UpdatedAt:       time.Now().UTC(),
 	}
 }
 
-func MapBookingToResponse(b *en.Booking) *con.BookingResponse {
-	return &con.BookingResponse{
+func MapBookingToResponse(b *en.Booking) *BookingResponse {
+	return &BookingResponse{
 		Id:               b.Id,
-		WorkingPeriodId:  b.WorkingPeriodId,
-		SessionId:        b.SessionId,
-		ScheduledEventId: b.ScheduledEventId,
+		EducatorId:       b.EducatorId,
 		StudentId:        b.StudentId,
+		EnrollmentId:     b.EnrollmentId,
+		ProductId:        b.ProductId,
+		ScheduledEventId: b.ScheduledEventId,
+		WorkingPeriodId:  b.WorkingPeriodId,
 		StartTime:        b.StartTime,
 		EndTime:          b.EndTime,
-		Status:           b.Status,
+		Status:           int(b.Status),
 	}
 }
 
-func MapBookingsToResponse(bs []*en.Booking) []*con.BookingResponse {
-	response := make([]*con.BookingResponse, len(bs))
+func MapBookingsToResponse(bs []*en.Booking) []*BookingResponse {
+	if len(bs) == 0 {
+		return []*BookingResponse{}
+	}
+
+	response := make([]*BookingResponse, len(bs))
 	for i, b := range bs {
 		response[i] = MapBookingToResponse(b)
 	}

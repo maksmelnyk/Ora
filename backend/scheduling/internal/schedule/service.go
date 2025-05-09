@@ -3,15 +3,19 @@ package schedule
 import (
 	"context"
 	"errors"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
 
+	"slices"
+
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
 	ec "github.com/maksmelnyk/scheduling/internal/errors"
 	"github.com/maksmelnyk/scheduling/internal/logger"
+	"github.com/maksmelnyk/scheduling/internal/messaging"
 	mid "github.com/maksmelnyk/scheduling/internal/middleware"
-	con "github.com/maksmelnyk/scheduling/internal/schedule/contracts"
+	"github.com/maksmelnyk/scheduling/internal/products"
 )
 
 type ScheduleRepository interface {
@@ -20,6 +24,8 @@ type ScheduleRepository interface {
 	GetBookings(ctx context.Context, workingPeriodIds []int64) ([]*e.Booking, error)
 	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*e.WorkingPeriod, error)
 	GetScheduledEventById(ctx context.Context, userId uuid.UUID, id int64) (*e.ScheduledEvent, error)
+	GetScheduledEventLessonIds(ctx context.Context, productId int64) ([]int64, error)
+	ProductScheduledEventExists(ctx context.Context, id int64, productId int64) (bool, error)
 	HasLinkedEvents(ctx context.Context, workingPeriodId int64) (bool, error)
 	AddWorkingPeriod(ctx context.Context, wd *e.WorkingPeriod) error
 	UpdateWorkingPeriod(ctx context.Context, wd *e.WorkingPeriod) error
@@ -29,15 +35,22 @@ type ScheduleRepository interface {
 }
 
 type ScheduleService struct {
-	log  logger.Logger
-	repo ScheduleRepository
+	log       logger.Logger
+	repo      ScheduleRepository
+	client    *products.ProductServiceClient
+	publisher *messaging.Publisher
 }
 
-func NewScheduleService(log logger.Logger, repo ScheduleRepository) *ScheduleService {
-	return &ScheduleService{log: log, repo: repo}
+func NewScheduleService(
+	log logger.Logger,
+	repo ScheduleRepository,
+	client *products.ProductServiceClient,
+	publisher *messaging.Publisher,
+) *ScheduleService {
+	return &ScheduleService{log: log, repo: repo, client: client, publisher: publisher}
 }
 
-func (s *ScheduleService) GetUserSchedule(ctx context.Context, userId uuid.UUID, fromDate time.Time, toDate time.Time) (*con.ScheduleResponse, error) {
+func (s *ScheduleService) GetScheduleByUserId(ctx context.Context, userId uuid.UUID, fromDate time.Time, toDate time.Time) (*ScheduleResponse, error) {
 	log := logger.FromContext(ctx, s.log)
 
 	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, fromDate, toDate)
@@ -47,7 +60,7 @@ func (s *ScheduleService) GetUserSchedule(ctx context.Context, userId uuid.UUID,
 	}
 
 	if len(workingPeriods) == 0 {
-		return &con.ScheduleResponse{}, nil
+		return &ScheduleResponse{}, nil
 	}
 
 	var workingPeriodIds []int64
@@ -67,7 +80,7 @@ func (s *ScheduleService) GetUserSchedule(ctx context.Context, userId uuid.UUID,
 		return nil, ec.ErrInternalError
 	}
 
-	schedule := &con.ScheduleResponse{
+	schedule := &ScheduleResponse{
 		WorkingPeriods:  MapWorkingPeriodsToResponse(workingPeriods),
 		ScheduledEvents: MapScheduledEventsToResponse(scheduledEvents),
 		Bookings:        MapBookingsToResponse(bookings),
@@ -76,7 +89,51 @@ func (s *ScheduleService) GetUserSchedule(ctx context.Context, userId uuid.UUID,
 	return schedule, nil
 }
 
-func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *con.WorkingPeriodRequest) error {
+func (s *ScheduleService) GetScheduledEventMetadata(ctx context.Context, semr *ScheduledEventMetadataRequest) (*ScheduledEventMetadataResponse, error) {
+	log := logger.FromContext(ctx, s.log)
+
+	if (semr.LessonIds == nil || slices.Contains(semr.LessonIds, 0)) && semr.ScheduledEventId == nil {
+		msg := "either lessonIds or scheduledEventId must be provided"
+		log.Error(msg)
+		return &ScheduledEventMetadataResponse{ErrorMessage: msg}, nil
+	}
+
+	if semr.ScheduledEventId != nil {
+		exists, err := s.repo.ProductScheduledEventExists(ctx, *semr.ScheduledEventId, semr.ProductId)
+		if err != nil {
+			msg := "failed to check if scheduled event exists"
+			log.Error(msg, err)
+			return &ScheduledEventMetadataResponse{ErrorMessage: msg}, err
+		}
+
+		if !exists {
+			msg := "scheduled event does not exist"
+			log.Error(msg)
+			return &ScheduledEventMetadataResponse{ErrorMessage: msg}, nil
+		}
+	}
+
+	if semr.LessonIds != nil {
+		lessonIds, err := s.repo.GetScheduledEventLessonIds(ctx, semr.ProductId)
+		if err != nil {
+			msg := "failed to get scheduled event lesson ids"
+			log.Error(msg, err)
+			return &ScheduledEventMetadataResponse{ErrorMessage: msg}, err
+		}
+
+		for _, lessonId := range semr.LessonIds {
+			if !slices.Contains(lessonIds, lessonId) {
+				msg := "lesson does not exist"
+				log.Error("lesson does not exist")
+				return &ScheduledEventMetadataResponse{ErrorMessage: msg}, nil
+			}
+		}
+	}
+
+	return &ScheduledEventMetadataResponse{IsValid: true}, nil
+}
+
+func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *WorkingPeriodRequest) error {
 	log := logger.FromContext(ctx, s.log)
 
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
@@ -84,7 +141,7 @@ func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *con.Working
 		return ec.ErrUserIdNotFound
 	}
 
-	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, wpr.Date, wpr.Date)
+	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, wpr.StartTime, wpr.EndTime)
 	if err != nil {
 		log.Error("failed to get working periods", err)
 		return ec.ErrInternalError
@@ -106,7 +163,7 @@ func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *con.Working
 	return nil
 }
 
-func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr *con.WorkingPeriodRequest) error {
+func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr *WorkingPeriodRequest) error {
 	log := logger.FromContext(ctx, s.log)
 
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
@@ -173,7 +230,12 @@ func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) err
 	return nil
 }
 
-func (s *ScheduleService) AddScheduledEvent(ctx context.Context, workingPeriodId int64, ser *con.ScheduledEventRequest) error {
+func (s *ScheduleService) AddScheduledEvent(
+	ctx context.Context,
+	workingPeriodId int64,
+	ser *ScheduledEventRequest,
+	authHeader string,
+) error {
 	log := logger.FromContext(ctx, s.log)
 
 	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
@@ -208,11 +270,35 @@ func (s *ScheduleService) AddScheduledEvent(ctx context.Context, workingPeriodId
 		}
 	}
 
-	err = s.repo.AddScheduledEvent(ctx, MapRequestToScheduledEvent(ser, userId, workingPeriodId))
+	durationMin := int(math.Round(ser.EndTime.Sub(ser.StartTime).Minutes()))
+	pi, err := s.client.GetSchedulingMetadata(ctx, ser.ProductId, ser.LessonId, durationMin, authHeader)
+	if err != nil {
+		return err
+	}
+
+	if pi.State == products.Invalid {
+		return errors.New(pi.ErrorMessage)
+	}
+
+	if pi.State == products.Unschedulable {
+		return errors.New("product is unschedulable")
+	}
+
+	err = s.repo.AddScheduledEvent(ctx, MapRequestToScheduledEvent(ser, userId, workingPeriodId, pi.Title, pi.MaxParticipants))
 	if err != nil {
 		log.Error("failed to add scheduled event", err)
 		return ec.ErrInternalError
 	}
+
+	s.publisher.Publish(
+		ctx,
+		messaging.EventScheduledKey,
+		messaging.NewEventScheduledEvent(
+			ser.ProductId,
+			ser.StartTime.Format(time.RFC3339),
+			ser.EndTime.Format(time.RFC3339),
+		),
+	)
 
 	return nil
 }
