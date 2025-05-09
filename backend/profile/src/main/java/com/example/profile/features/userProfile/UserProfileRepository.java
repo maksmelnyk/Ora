@@ -2,9 +2,9 @@ package com.example.profile.features.userProfile;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import com.example.profile.features.userProfile.entities.UserProfile;
+
 import java.util.UUID;
 
-public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
-    Optional<UserProfile> findByUserId(UUID identityId);
+public interface UserProfileRepository extends JpaRepository<UserProfile, UUID> {
 }

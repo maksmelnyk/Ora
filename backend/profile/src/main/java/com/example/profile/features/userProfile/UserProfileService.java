@@ -1,49 +1,69 @@
 package com.example.profile.features.userProfile;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.example.profile.exceptions.ErrorCodes;
 import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
+import com.example.profile.features.educatorProfile.EducatorProfileRepository;
+import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
+import com.example.profile.infrastructure.rabbitmq.events.RegistrationCompletedEvent;
+import com.example.profile.infrastructure.rabbitmq.events.RegistrationInitiatedEvent;
+import com.example.profile.infrastructure.rabbitmq.publishers.EventPublisher;
 import com.example.profile.middlewares.security.CurrentUser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
-    private final UserProfileRepository repository;
-    private final UserProfileMapper mapper;
     private final CurrentUser currentUser;
+    private final EventPublisher eventPublisher;
+    private final UserProfileMapper mapper;
+    private final UserProfileRepository repository;
+    private final EducatorProfileRepository educatorRepository;
 
-    public UserProfileResponse getMyUserProfile() {
+    public ProfileDetailsResponse getMyUserProfile() {
         UUID userId = this.currentUser.getUserId();
-        return this.repository.findByUserId(userId)
-                .map(mapper::fromUserProfile)
+        return this.repository.findById(userId)
+                .map(mapper::toProfileDetails)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + userId + "not found",
                         ErrorCodes.USER_PROFILE_NOT_FOUND));
     }
 
-    public UserProfileResponse getUserProfileById(Long id) {
+    public ProfileDetailsResponse getUserProfileById(UUID id) {
         return this.repository.findById(id)
-                .map(mapper::fromUserProfile)
+                .map(mapper::toProfileDetails)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + id + "not found",
                         ErrorCodes.USER_PROFILE_NOT_FOUND));
     }
 
     public void updateUserProfile(UpdateUserProfileRequest request) {
         UUID userId = this.currentUser.getUserId();
-        var profile = this.repository.findByUserId(userId)
+        var profile = this.repository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + userId + "not found",
                         ErrorCodes.USER_PROFILE_NOT_FOUND));
 
-        profile.setFirstName(request.firstName());
-        profile.setLastName(request.lastName());
-        profile.setBirthDate(request.birthDate());
-
+        this.mapper.mapUserProfile(request, profile);
         this.repository.save(profile);
+
+        if (educatorRepository.existsById(userId)) {
+            this.eventPublisher.publishEducatorProfileUpdatedEvent(mapper.toProfileUpdatedEvent(profile));
+        }
+    }
+
+    public void createUserProfile(RegistrationInitiatedEvent request) {
+        var profile = this.mapper.toUserProfile(request);
+        this.repository.save(profile);
+        RegistrationCompletedEvent event = new RegistrationCompletedEvent(
+                request.getUserId(),
+                true,
+                null);
+        event.setCorrelationId(request.getCorrelationId());
+        this.eventPublisher.publishRegistrationCompleted(event);
     }
 }
