@@ -1,4 +1,4 @@
-package com.example.auth.infrastructure.rabbitmq;
+package com.example.auth.infrastructure.messaging;
 
 public class Constants {
     // Queues

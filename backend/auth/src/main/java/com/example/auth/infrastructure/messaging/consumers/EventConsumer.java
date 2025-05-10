@@ -1,13 +1,13 @@
-package com.example.auth.infrastructure.rabbitmq.consumers;
+package com.example.auth.infrastructure.messaging.consumers;
 
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import com.example.auth.AuthService;
-import com.example.auth.infrastructure.rabbitmq.Constants;
-import com.example.auth.infrastructure.rabbitmq.events.EducatorCreatedEvent;
-import com.example.auth.infrastructure.rabbitmq.events.RegistrationCompletedEvent;
+import com.example.auth.features.AuthService;
+import com.example.auth.infrastructure.messaging.Constants;
+import com.example.auth.infrastructure.messaging.events.EducatorCreatedEvent;
+import com.example.auth.infrastructure.messaging.events.RegistrationCompletedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

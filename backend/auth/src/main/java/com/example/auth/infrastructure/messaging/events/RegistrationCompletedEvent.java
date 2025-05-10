@@ -1,6 +1,6 @@
-package com.example.auth.infrastructure.rabbitmq.events;
+package com.example.auth.infrastructure.messaging.events;
 
-import com.example.auth.infrastructure.rabbitmq.Constants;
+import com.example.auth.infrastructure.messaging.Constants;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

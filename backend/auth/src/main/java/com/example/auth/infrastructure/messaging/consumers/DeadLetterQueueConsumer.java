@@ -1,11 +1,11 @@
-package com.example.auth.infrastructure.rabbitmq.consumers;
+package com.example.auth.infrastructure.messaging.consumers;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
-import com.example.auth.infrastructure.rabbitmq.Constants;
-import com.example.auth.infrastructure.rabbitmq.events.BaseEvent;
+import com.example.auth.infrastructure.messaging.Constants;
+import com.example.auth.infrastructure.messaging.events.BaseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;

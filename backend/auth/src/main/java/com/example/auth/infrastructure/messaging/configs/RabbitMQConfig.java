@@ -1,4 +1,4 @@
-package com.example.auth.infrastructure.rabbitmq.configs;
+package com.example.auth.infrastructure.messaging.configs;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,9 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.example.auth.infrastructure.rabbitmq.Constants;
-import com.example.auth.infrastructure.rabbitmq.events.EducatorCreatedEvent;
-import com.example.auth.infrastructure.rabbitmq.events.RegistrationCompletedEvent;
+import com.example.auth.infrastructure.messaging.Constants;
+import com.example.auth.infrastructure.messaging.events.EducatorCreatedEvent;
+import com.example.auth.infrastructure.messaging.events.RegistrationCompletedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;

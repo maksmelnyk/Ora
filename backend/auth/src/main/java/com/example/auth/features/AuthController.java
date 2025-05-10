@@ -1,4 +1,4 @@
-package com.example.auth;
+package com.example.auth.features;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.auth.contracts.RegistrationRequest;
-import com.example.auth.contracts.RegistrationResponse;
-import com.example.auth.contracts.RegistrationStatusRequest;
-import com.example.auth.contracts.RegistrationStatusResponse;
+import com.example.auth.features.contracts.RegistrationRequest;
+import com.example.auth.features.contracts.RegistrationResponse;
+import com.example.auth.features.contracts.RegistrationStatusRequest;
+import com.example.auth.features.contracts.RegistrationStatusResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

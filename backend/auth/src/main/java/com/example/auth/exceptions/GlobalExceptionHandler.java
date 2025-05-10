@@ -1,13 +1,9 @@
-package com.example.auth.handlers;
+package com.example.auth.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import com.example.auth.exceptions.AuthenticationException;
-import com.example.auth.exceptions.ResourceNotCreatedException;
-import com.example.auth.exceptions.ValidationException;
 
 import java.util.HashMap;
 import java.util.Map;

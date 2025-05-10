@@ -1,4 +1,4 @@
-package com.example.auth.contracts;
+package com.example.auth.features.contracts;
 
 public enum RegistrationState {
     PENDING, COMPLETED, FAILED

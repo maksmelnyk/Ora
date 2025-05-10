@@ -1,4 +1,4 @@
-package com.example.auth.infrastructure.rabbitmq.events;
+package com.example.auth.infrastructure.messaging.events;
 
 import java.io.Serializable;
 import java.time.Instant;

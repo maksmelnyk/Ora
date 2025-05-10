@@ -1,4 +1,4 @@
-package com.example.auth.contracts;
+package com.example.auth.features.contracts;
 
 public record RegistrationStatusResponse(RegistrationState state, String errorMessage) {
 }

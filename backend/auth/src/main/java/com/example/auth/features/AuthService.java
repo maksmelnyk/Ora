@@ -1,20 +1,20 @@
-package com.example.auth;
+package com.example.auth.features;
 
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.example.auth.contracts.RegistrationRequest;
-import com.example.auth.contracts.RegistrationResponse;
-import com.example.auth.contracts.RegistrationState;
-import com.example.auth.contracts.RegistrationStatusRequest;
-import com.example.auth.contracts.RegistrationStatusResponse;
+import com.example.auth.features.contracts.RegistrationRequest;
+import com.example.auth.features.contracts.RegistrationResponse;
+import com.example.auth.features.contracts.RegistrationState;
+import com.example.auth.features.contracts.RegistrationStatusRequest;
+import com.example.auth.features.contracts.RegistrationStatusResponse;
 import com.example.auth.infrastructure.jwt.JwtService;
 import com.example.auth.infrastructure.keycloak.KeycloakClient;
 import com.example.auth.infrastructure.keycloak.KeycloakRole;
 import com.example.auth.infrastructure.keycloak.KeycloakClient.UserStatus;
-import com.example.auth.infrastructure.rabbitmq.events.RegistrationInitiatedEvent;
-import com.example.auth.infrastructure.rabbitmq.publishers.EventPublisher;
+import com.example.auth.infrastructure.messaging.events.RegistrationInitiatedEvent;
+import com.example.auth.infrastructure.messaging.publishers.EventPublisher;
 
 import lombok.AllArgsConstructor;
 

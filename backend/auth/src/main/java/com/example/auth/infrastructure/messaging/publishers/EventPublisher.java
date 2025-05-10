@@ -1,4 +1,4 @@
-package com.example.auth.infrastructure.rabbitmq.publishers;
+package com.example.auth.infrastructure.messaging.publishers;
 
 import java.util.concurrent.TimeUnit;
 
@@ -8,9 +8,9 @@ import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
-import com.example.auth.infrastructure.rabbitmq.Constants;
-import com.example.auth.infrastructure.rabbitmq.events.BaseEvent;
-import com.example.auth.infrastructure.rabbitmq.events.RegistrationInitiatedEvent;
+import com.example.auth.infrastructure.messaging.Constants;
+import com.example.auth.infrastructure.messaging.events.BaseEvent;
+import com.example.auth.infrastructure.messaging.events.RegistrationInitiatedEvent;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
