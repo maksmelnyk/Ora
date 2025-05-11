@@ -1,4 +1,4 @@
-using Learning.Data.Entities;
+using Learning.Features.Products.Entities;
 using Learning.Features.Profiles;
 
 namespace Learning.Features.Products.Contracts;

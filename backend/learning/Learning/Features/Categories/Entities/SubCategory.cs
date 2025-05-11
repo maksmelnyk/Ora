@@ -1,4 +1,6 @@
-namespace Learning.Data.Entities;
+using Learning.Features.Products.Entities;
+
+namespace Learning.Features.Categories.Entities;
 
 public class SubCategory
 {

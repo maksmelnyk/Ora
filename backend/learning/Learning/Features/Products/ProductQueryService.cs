@@ -1,10 +1,10 @@
-using Learning.Data.Entities;
 using Learning.Exceptions;
 using Learning.Features.Enrollments;
 using Learning.Features.Products.Contracts;
+using Learning.Features.Products.Entities;
 using Learning.Features.Profiles;
 using Learning.Infrastructure.Identity;
-using Learning.Utils;
+using Learning.Shared;
 
 namespace Learning.Features.Products;
 

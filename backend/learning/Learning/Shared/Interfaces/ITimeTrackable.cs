@@ -1,4 +1,4 @@
-namespace Learning.Data.Interfaces;
+namespace Learning.Shared.Interfaces;
 
 public interface ITimeTrackable
 {

@@ -1,4 +1,4 @@
-using Learning.Data.Entities;
+using Learning.Features.Profiles.Entities;
 
 namespace Learning.Features.Profiles;
 

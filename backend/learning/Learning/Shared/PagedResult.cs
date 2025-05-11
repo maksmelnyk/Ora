@@ -1,4 +1,4 @@
-namespace Learning.Utils;
+namespace Learning.Shared;
 
 public class PagedResult<T>
 {

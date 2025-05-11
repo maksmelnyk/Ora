@@ -1,8 +1,8 @@
 using System.Globalization;
 using FluentValidation;
-using Learning.Data.Entities;
 using Learning.Exceptions;
 using Learning.Features.Products.Contracts;
+using Learning.Features.Products.Entities;
 using Learning.Infrastructure.Identity;
 using Learning.Infrastructure.Messaging;
 using Learning.Infrastructure.Messaging.Events;

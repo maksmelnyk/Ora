@@ -1,4 +1,4 @@
-namespace Learning.Data.Entities;
+namespace Learning.Features.Products.Entities;
 
 public class OnlineCourseProduct
 {

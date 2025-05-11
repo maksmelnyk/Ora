@@ -1,4 +1,4 @@
-namespace Learning.Data.Entities;
+namespace Learning.Features.Categories.Entities;
 
 public class Category
 {

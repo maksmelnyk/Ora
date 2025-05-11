@@ -1,6 +1,7 @@
-using Learning.Data.Interfaces;
+using Learning.Features.Categories.Entities;
+using Learning.Shared.Interfaces;
 
-namespace Learning.Data.Entities;
+namespace Learning.Features.Products.Entities;
 
 public class Product : ITimeTrackable
 {

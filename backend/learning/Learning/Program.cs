@@ -1,15 +1,15 @@
 using FluentValidation;
-using Learning.Data;
 using Learning.Features.Categories;
 using Learning.Features.Enrollments;
 using Learning.Features.Products;
 using Learning.Features.Profiles;
+using Learning.Infrastructure.Data;
 using Learning.Infrastructure.Identity;
 using Learning.Infrastructure.Keycloak;
 using Learning.Infrastructure.Messaging.RabbitMq;
 using Learning.Infrastructure.OpenApi;
 using Learning.Infrastructure.Telemetry;
-using Learning.Middlewares;
+using Learning.Middleware;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;

@@ -1,6 +1,6 @@
-using Learning.Data.Interfaces;
+using Learning.Shared.Interfaces;
 
-namespace Learning.Data.Entities;
+namespace Learning.Features.Enrollments.Entities;
 
 public class Enrollment : ITimeTrackable
 {

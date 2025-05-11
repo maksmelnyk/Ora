@@ -1,7 +1,6 @@
-using Learning.Data;
-using Learning.Data.Entities;
 using Learning.Exceptions;
-using Learning.Utils;
+using Learning.Features.Products.Entities;
+using Learning.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Learning.Features.Products;

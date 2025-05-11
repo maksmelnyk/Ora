@@ -1,6 +1,6 @@
 using FluentValidation;
-using Learning.Data.Entities;
 using Learning.Features.Products.Contracts;
+using Learning.Features.Products.Entities;
 
 namespace Learning.Features.Products.Validators;
 

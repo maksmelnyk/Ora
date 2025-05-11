@@ -1,17 +1,17 @@
-using Learning.Data.Interfaces;
+using Learning.Shared.Interfaces;
 
-namespace Learning.Data.Entities;
+namespace Learning.Features.Products.Entities;
 
-public class Module : ITimeTrackable
+public class Lesson : ITimeTrackable
 {
     public long Id { get; set; }
-    public long ProductId { get; set; }
+    public long ModuleId { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
+    public int DurationMin { get; set; }
     public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public virtual Product Product { get; set; }
-    public virtual ICollection<Lesson> Lessons { get; set; }
+    public virtual Module Module { get; set; }
 }

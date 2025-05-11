@@ -1,8 +1,11 @@
-using Learning.Data.Entities;
-using Learning.Data.Interfaces;
+using Learning.Features.Categories.Entities;
+using Learning.Features.Enrollments.Entities;
+using Learning.Features.Products.Entities;
+using Learning.Features.Profiles.Entities;
+using Learning.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Learning.Data;
+namespace Learning.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace Learning.Middlewares;
+namespace Learning.Middleware;
 
 public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> logger)
 {

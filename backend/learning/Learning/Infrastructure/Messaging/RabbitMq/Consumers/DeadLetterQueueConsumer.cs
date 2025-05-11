@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Learning.Utils;
 
 namespace Learning.Infrastructure.Messaging.RabbitMq.Consumers;
 

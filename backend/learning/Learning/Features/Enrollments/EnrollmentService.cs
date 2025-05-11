@@ -1,6 +1,7 @@
-using Learning.Data.Entities;
 using Learning.Features.Enrollments.Contracts;
+using Learning.Features.Enrollments.Entities;
 using Learning.Features.Products;
+using Learning.Features.Products.Entities;
 using Learning.Infrastructure.Identity;
 
 namespace Learning.Features.Enrollments;

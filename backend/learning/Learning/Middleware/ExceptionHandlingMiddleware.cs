@@ -2,7 +2,7 @@ using System.Net;
 using FluentValidation;
 using Learning.Exceptions;
 
-namespace Learning.Middlewares;
+namespace Learning.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {

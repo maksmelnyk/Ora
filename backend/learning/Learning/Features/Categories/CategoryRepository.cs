@@ -1,5 +1,5 @@
-using Learning.Data;
-using Learning.Data.Entities;
+using Learning.Features.Categories.Entities;
+using Learning.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Learning.Features.Categories;

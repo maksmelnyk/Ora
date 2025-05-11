@@ -1,4 +1,4 @@
-namespace Learning.Utils;
+namespace Learning.Infrastructure.Messaging;
 
 public static class RetryDelayCalculator
 {

@@ -1,4 +1,4 @@
-namespace Learning.Data.Entities;
+namespace Learning.Features.Profiles.Entities;
 
 public class ProfileSummary
 {

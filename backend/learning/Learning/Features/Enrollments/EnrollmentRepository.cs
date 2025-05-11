@@ -1,5 +1,5 @@
-using Learning.Data;
-using Learning.Data.Entities;
+using Learning.Features.Enrollments.Entities;
+using Learning.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Learning.Features.Enrollments;

@@ -1,6 +1,5 @@
 using System.Text;
 using Learning.Infrastructure.Messaging.RabbitMq.Consumers;
-using Learning.Utils;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

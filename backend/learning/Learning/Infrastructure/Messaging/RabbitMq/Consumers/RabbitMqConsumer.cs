@@ -1,10 +1,9 @@
 using System.Text.Json;
-using Learning.Data.Entities;
 using Learning.Features.Enrollments;
 using Learning.Features.Products;
 using Learning.Features.Profiles;
+using Learning.Features.Profiles.Entities;
 using Learning.Infrastructure.Messaging.Events;
-using Learning.Utils;
 
 namespace Learning.Infrastructure.Messaging.RabbitMq.Consumers;
 
