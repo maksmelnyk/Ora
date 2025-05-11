@@ -1,4 +1,4 @@
-package com.example.profile.middlewares.logging;
+package com.example.profile.middleware.logging;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

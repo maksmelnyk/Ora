@@ -1,4 +1,4 @@
-package com.example.profile.infrastructure.rabbitmq.configs;
+package com.example.profile.infrastructure.messaging.configs;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.example.profile.infrastructure.rabbitmq.Constants;
+import com.example.profile.infrastructure.messaging.Constants;
 
 @Configuration
 public class QueueConfiguration {

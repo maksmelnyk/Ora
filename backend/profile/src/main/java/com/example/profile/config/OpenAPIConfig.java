@@ -1,4 +1,4 @@
-package com.example.profile.middlewares.security;
+package com.example.profile.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

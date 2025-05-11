@@ -1,8 +1,8 @@
-package com.example.profile.infrastructure.rabbitmq.events;
+package com.example.profile.infrastructure.messaging.events;
 
 import java.time.LocalDate;
 
-import com.example.profile.infrastructure.rabbitmq.Constants;
+import com.example.profile.infrastructure.messaging.Constants;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Getter;

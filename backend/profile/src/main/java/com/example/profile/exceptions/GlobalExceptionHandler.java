@@ -1,4 +1,4 @@
-package com.example.profile.handlers;
+package com.example.profile.exceptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,11 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import com.example.profile.exceptions.AuthenticationException;
-import com.example.profile.exceptions.InvalidRequestException;
-import com.example.profile.exceptions.ResourceNotFoundException;
-import com.example.profile.exceptions.ValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

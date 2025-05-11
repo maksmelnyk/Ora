@@ -20,8 +20,8 @@ import com.example.profile.features.educatorProfile.contracts.UpdateEducatorProf
 import com.example.profile.features.educatorProfile.entities.EducatorProfile;
 import com.example.profile.features.userProfile.UserProfileRepository;
 import com.example.profile.features.userProfile.entities.UserProfile;
-import com.example.profile.infrastructure.rabbitmq.publishers.EventPublisher;
-import com.example.profile.middlewares.security.CurrentUser;
+import com.example.profile.infrastructure.identity.CurrentUser;
+import com.example.profile.infrastructure.messaging.publishers.EventPublisher;
 
 import java.util.Optional;
 import java.util.UUID;

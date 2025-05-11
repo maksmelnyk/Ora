@@ -1,4 +1,4 @@
-package com.example.profile.middlewares.security;
+package com.example.profile.infrastructure.identity;
 
 import java.util.Optional;
 import java.util.UUID;

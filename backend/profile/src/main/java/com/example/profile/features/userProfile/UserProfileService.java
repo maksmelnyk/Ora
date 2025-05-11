@@ -7,12 +7,12 @@ import org.springframework.stereotype.Service;
 import com.example.profile.exceptions.ErrorCodes;
 import com.example.profile.exceptions.ResourceNotFoundException;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
+import com.example.profile.infrastructure.identity.CurrentUser;
+import com.example.profile.infrastructure.messaging.events.RegistrationCompletedEvent;
+import com.example.profile.infrastructure.messaging.events.RegistrationInitiatedEvent;
+import com.example.profile.infrastructure.messaging.publishers.EventPublisher;
 import com.example.profile.features.educatorProfile.EducatorProfileRepository;
 import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
-import com.example.profile.infrastructure.rabbitmq.events.RegistrationCompletedEvent;
-import com.example.profile.infrastructure.rabbitmq.events.RegistrationInitiatedEvent;
-import com.example.profile.infrastructure.rabbitmq.publishers.EventPublisher;
-import com.example.profile.middlewares.security.CurrentUser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

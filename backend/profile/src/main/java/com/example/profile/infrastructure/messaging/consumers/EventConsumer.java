@@ -1,4 +1,4 @@
-package com.example.profile.infrastructure.rabbitmq.consumers;
+package com.example.profile.infrastructure.messaging.consumers;
 
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component;
 
 import com.example.profile.features.educatorProfile.EducatorProfileService;
 import com.example.profile.features.userProfile.UserProfileService;
-import com.example.profile.infrastructure.rabbitmq.Constants;
-import com.example.profile.infrastructure.rabbitmq.events.EducatorProductCreatedEvent;
-import com.example.profile.infrastructure.rabbitmq.events.RegistrationInitiatedEvent;
+import com.example.profile.infrastructure.messaging.Constants;
+import com.example.profile.infrastructure.messaging.events.EducatorProductCreatedEvent;
+import com.example.profile.infrastructure.messaging.events.RegistrationInitiatedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -27,8 +27,8 @@ import com.example.profile.features.userProfile.UserProfileService;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
 import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
 import com.example.profile.features.userProfile.entities.UserProfile;
-import com.example.profile.infrastructure.rabbitmq.publishers.EventPublisher;
-import com.example.profile.middlewares.security.CurrentUser;
+import com.example.profile.infrastructure.identity.CurrentUser;
+import com.example.profile.infrastructure.messaging.publishers.EventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 public class UserProfileServiceTest {

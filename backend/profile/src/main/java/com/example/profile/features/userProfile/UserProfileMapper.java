@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
 import com.example.profile.features.userProfile.entities.UserProfile;
-import com.example.profile.infrastructure.rabbitmq.events.EducatorProfileUpdatedEvent;
-import com.example.profile.infrastructure.rabbitmq.events.RegistrationInitiatedEvent;
+import com.example.profile.infrastructure.messaging.events.EducatorProfileUpdatedEvent;
+import com.example.profile.infrastructure.messaging.events.RegistrationInitiatedEvent;
 
 @Component
 public class UserProfileMapper {

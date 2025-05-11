@@ -1,4 +1,4 @@
-package com.example.profile.infrastructure.rabbitmq;
+package com.example.profile.infrastructure.messaging;
 
 public class Constants {
     // Queues
