@@ -6,13 +6,13 @@ import org.springframework.stereotype.Service;
 
 import com.example.profile.exceptions.ErrorCodes;
 import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.features.educatorProfile.EducatorProfileRepository;
+import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
 import com.example.profile.infrastructure.identity.CurrentUser;
 import com.example.profile.infrastructure.messaging.events.RegistrationCompletedEvent;
 import com.example.profile.infrastructure.messaging.events.RegistrationInitiatedEvent;
 import com.example.profile.infrastructure.messaging.publishers.EventPublisher;
-import com.example.profile.features.educatorProfile.EducatorProfileRepository;
-import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,12 +57,22 @@ public class UserProfileService {
     }
 
     public void createUserProfile(RegistrationInitiatedEvent request) {
-        var profile = this.mapper.toUserProfile(request);
-        this.repository.save(profile);
+        String userId = request.getUserId();
+        boolean success = false;
+        String errorMessage = null;
+
+        try {
+            this.repository.save(this.mapper.toUserProfile(request));
+            success = true;
+        } catch (Exception e) {
+            log.error("Error creating user profile for userId: {}", userId, e);
+            errorMessage = e.getMessage();
+        }
+
         RegistrationCompletedEvent event = new RegistrationCompletedEvent(
-                request.getUserId(),
-                true,
-                null);
+                userId,
+                success,
+                errorMessage);
         event.setCorrelationId(request.getCorrelationId());
         this.eventPublisher.publishRegistrationCompleted(event);
     }
