@@ -5,16 +5,16 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
 
-from app.core.config.settings import RabbitMqSettings, Settings
-from app.core.messaging.manager import RabbitMqApplicationManager
-from app.core.openapi import custom_openapi
-from app.core.telemetry.config import configure_telemetry
-from app.core.database.config import engine
-from app.core.dependencies import get_settings, get_token_validator
-from app.middlewares.auth import AuthMiddleware
-from app.middlewares.logging import RequestLoggingMiddleware
-from app.payments.router import router as payment_router
+from app.config.openapi import custom_openapi
+from app.config.settings import RabbitMqSettings, Settings
 from app.exceptions.exception_handlers import setup_exception_handlers
+from app.infrastructure.messaging.manager import RabbitMqApplicationManager
+from app.infrastructure.telemetry.config import configure_telemetry
+from app.infrastructure.database.config import engine
+from app.infrastructure.dependencies import get_settings, get_token_validator
+from app.middleware.auth import AuthMiddleware
+from app.middleware.logging import RequestLoggingMiddleware
+from app.features.payment.router import router as payment_router
 
 settings: Settings = get_settings()
 configure_telemetry(stg=settings)
