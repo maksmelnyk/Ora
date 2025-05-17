@@ -5,10 +5,10 @@ import (
 
 	"github.com/google/uuid"
 
-	en "github.com/maksmelnyk/scheduling/internal/database/entities"
+	"github.com/maksmelnyk/scheduling/internal/database/entities"
 )
 
-func MapWorkingPeriodToResponse(wp *en.WorkingPeriod) *WorkingPeriodResponse {
+func MapWorkingPeriodToResponse(wp *entities.WorkingPeriod) *WorkingPeriodResponse {
 	return &WorkingPeriodResponse{
 		Id:        wp.Id,
 		StartTime: wp.StartTime,
@@ -16,7 +16,7 @@ func MapWorkingPeriodToResponse(wp *en.WorkingPeriod) *WorkingPeriodResponse {
 	}
 }
 
-func MapWorkingPeriodsToResponse(wps []*en.WorkingPeriod) []*WorkingPeriodResponse {
+func MapWorkingPeriodsToResponse(wps []*entities.WorkingPeriod) []*WorkingPeriodResponse {
 	if len(wps) == 0 {
 		return []*WorkingPeriodResponse{}
 	}
@@ -28,8 +28,8 @@ func MapWorkingPeriodsToResponse(wps []*en.WorkingPeriod) []*WorkingPeriodRespon
 	return response
 }
 
-func MapRequestToWorkingPeriod(userId uuid.UUID, wpr *WorkingPeriodRequest) *en.WorkingPeriod {
-	return &en.WorkingPeriod{
+func MapRequestToWorkingPeriod(userId uuid.UUID, wpr *WorkingPeriodRequest) *entities.WorkingPeriod {
+	return &entities.WorkingPeriod{
 		UserId:    userId,
 		StartTime: wpr.StartTime,
 		EndTime:   wpr.EndTime,
@@ -38,13 +38,13 @@ func MapRequestToWorkingPeriod(userId uuid.UUID, wpr *WorkingPeriodRequest) *en.
 	}
 }
 
-func MapRequestWithWorkingPeriod(wpr *WorkingPeriodRequest, wp *en.WorkingPeriod) {
+func MapRequestWithWorkingPeriod(wpr *WorkingPeriodRequest, wp *entities.WorkingPeriod) {
 	wp.StartTime = wpr.StartTime
 	wp.EndTime = wpr.EndTime
 	wp.UpdatedAt = time.Now().UTC()
 }
 
-func MapScheduledEventToResponse(se *en.ScheduledEvent) *ScheduledEventResponse {
+func MapScheduledEventToResponse(se *entities.ScheduledEvent) *ScheduledEventResponse {
 	return &ScheduledEventResponse{
 		Id:              se.Id,
 		ProductId:       se.ProductId,
@@ -57,7 +57,7 @@ func MapScheduledEventToResponse(se *en.ScheduledEvent) *ScheduledEventResponse 
 	}
 }
 
-func MapScheduledEventsToResponse(ses []*en.ScheduledEvent) []*ScheduledEventResponse {
+func MapScheduledEventsToResponse(ses []*entities.ScheduledEvent) []*ScheduledEventResponse {
 	if len(ses) == 0 {
 		return []*ScheduledEventResponse{}
 	}
@@ -75,8 +75,8 @@ func MapRequestToScheduledEvent(
 	workingPeriodId int64,
 	title string,
 	maxParticipants int,
-) *en.ScheduledEvent {
-	return &en.ScheduledEvent{
+) *entities.ScheduledEvent {
+	return &entities.ScheduledEvent{
 		ProductId:       ser.ProductId,
 		LessonId:        ser.LessonId,
 		WorkingPeriodId: workingPeriodId,
@@ -90,7 +90,7 @@ func MapRequestToScheduledEvent(
 	}
 }
 
-func MapBookingToResponse(b *en.Booking) *BookingResponse {
+func MapBookingToResponse(b *entities.Booking) *BookingResponse {
 	return &BookingResponse{
 		Id:               b.Id,
 		EducatorId:       b.EducatorId,
@@ -105,7 +105,7 @@ func MapBookingToResponse(b *en.Booking) *BookingResponse {
 	}
 }
 
-func MapBookingsToResponse(bs []*en.Booking) []*BookingResponse {
+func MapBookingsToResponse(bs []*entities.Booking) []*BookingResponse {
 	if len(bs) == 0 {
 		return []*BookingResponse{}
 	}

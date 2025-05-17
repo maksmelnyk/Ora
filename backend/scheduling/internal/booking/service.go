@@ -11,7 +11,7 @@ import (
 
 	"github.com/maksmelnyk/scheduling/internal/apperrors"
 	"github.com/maksmelnyk/scheduling/internal/auth"
-	e "github.com/maksmelnyk/scheduling/internal/database/entities"
+	"github.com/maksmelnyk/scheduling/internal/database/entities"
 	"github.com/maksmelnyk/scheduling/internal/logger"
 	"github.com/maksmelnyk/scheduling/internal/messaging"
 	"github.com/maksmelnyk/scheduling/internal/products"
@@ -19,15 +19,15 @@ import (
 )
 
 type BookingRepository interface {
-	GetEducatorBookingById(ctx context.Context, educatorId uuid.UUID, id int64) (*e.Booking, error)
-	GetBookingsByUserId(ctx context.Context, userId uuid.UUID, upcomingAfter *time.Time, skip int, take int) ([]*e.Booking, error)
-	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*e.WorkingPeriod, error)
-	GetScheduledEvents(ctx context.Context, workingPeriodId int64) ([]*e.ScheduledEvent, error)
-	GetLessonsScheduledEvents(ctx context.Context, lessonIds []int64) ([]*e.ScheduledEvent, error)
-	GetScheduledEventById(ctx context.Context, id int64) (*e.ScheduledEvent, error)
+	GetEducatorBookingById(ctx context.Context, educatorId uuid.UUID, id int64) (*entities.Booking, error)
+	GetBookingsByUserId(ctx context.Context, userId uuid.UUID, upcomingAfter *time.Time, skip int, take int) ([]*entities.Booking, error)
+	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*entities.WorkingPeriod, error)
+	GetScheduledEvents(ctx context.Context, workingPeriodId int64) ([]*entities.ScheduledEvent, error)
+	GetLessonsScheduledEvents(ctx context.Context, lessonIds []int64) ([]*entities.ScheduledEvent, error)
+	GetScheduledEventById(ctx context.Context, id int64) (*entities.ScheduledEvent, error)
 	HasBookingByEnrollmentId(ctx context.Context, enrollmentId int64) (bool, error)
-	AddBooking(ctx context.Context, b *e.Booking) error
-	AddBookings(ctx context.Context, b []*e.Booking) error
+	AddBooking(ctx context.Context, booking *entities.Booking) error
+	AddBookings(ctx context.Context, booking []*entities.Booking) error
 	SetBookingStatus(ctx context.Context, id int64, educatorId uuid.UUID, status int) error
 }
 
@@ -190,7 +190,7 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
-	if status != int(e.Approved) && status != int(e.Cancelled) {
+	if status != int(entities.Approved) && status != int(entities.Cancelled) {
 		log.Error("Invalid booking status: " + fmt.Sprintf("%d", status))
 		return apperrors.NewBadRequestError("Invalid booking status", apperrors.ErrParameterInvalid)
 	}
@@ -201,7 +201,7 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 		return err
 	}
 
-	if booking.Status != e.Pending {
+	if booking.Status != entities.Pending {
 		log.Errorf("Booking status already updated: %d", booking.Status)
 		return apperrors.NewUnprocessedEntity("Booking completed", apperrors.ErrBookingStatus)
 	}
@@ -211,7 +211,7 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 		return err
 	}
 
-	if status == int(e.Approved) {
+	if status == int(entities.Approved) {
 		s.publisher.Publish(
 			ctx,
 			messaging.BookingCompletedKey,

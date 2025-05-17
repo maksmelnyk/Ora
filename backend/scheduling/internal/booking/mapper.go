@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	en "github.com/maksmelnyk/scheduling/internal/database/entities"
+	"github.com/maksmelnyk/scheduling/internal/database/entities"
 )
 
 func MapRequestToBooking(
@@ -14,8 +14,8 @@ func MapRequestToBooking(
 	educatorId uuid.UUID,
 	productId int64,
 	title string,
-) *en.Booking {
-	return &en.Booking{
+) *entities.Booking {
+	return &entities.Booking{
 		StudentId:       studentId,
 		EducatorId:      educatorId,
 		ProductId:       productId,
@@ -24,14 +24,14 @@ func MapRequestToBooking(
 		WorkingPeriodId: b.WorkingPeriodId,
 		StartTime:       b.StartTime,
 		EndTime:         b.EndTime,
-		Status:          en.Pending,
+		Status:          entities.Pending,
 		CreatedAt:       time.Now().UTC(),
 		UpdatedAt:       time.Now().UTC(),
 	}
 }
 
-func MapScheduledEventToBooking(e *en.ScheduledEvent, studentId uuid.UUID) *en.Booking {
-	return &en.Booking{
+func MapScheduledEventToBooking(e *entities.ScheduledEvent, studentId uuid.UUID) *entities.Booking {
+	return &entities.Booking{
 		StudentId:        studentId,
 		EducatorId:       e.UserId,
 		ProductId:        e.ProductId,
@@ -40,18 +40,18 @@ func MapScheduledEventToBooking(e *en.ScheduledEvent, studentId uuid.UUID) *en.B
 		WorkingPeriodId:  e.WorkingPeriodId,
 		StartTime:        e.StartTime,
 		EndTime:          e.EndTime,
-		Status:           en.Approved,
+		Status:           entities.Approved,
 		CreatedAt:        time.Now().UTC(),
 		UpdatedAt:        time.Now().UTC(),
 	}
 }
 
-func MapScheduledEventsToBookings(e []*en.ScheduledEvent, studentId uuid.UUID) []*en.Booking {
+func MapScheduledEventsToBookings(e []*entities.ScheduledEvent, studentId uuid.UUID) []*entities.Booking {
 	if len(e) == 0 {
-		return []*en.Booking{}
+		return []*entities.Booking{}
 	}
 
-	response := make([]*en.Booking, len(e))
+	response := make([]*entities.Booking, len(e))
 	for i, b := range e {
 		response[i] = MapScheduledEventToBooking(b, studentId)
 	}

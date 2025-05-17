@@ -6,7 +6,7 @@ import (
 
 	"github.com/maksmelnyk/scheduling/internal/api"
 	"github.com/maksmelnyk/scheduling/internal/apperrors"
-	e "github.com/maksmelnyk/scheduling/internal/database/entities"
+	"github.com/maksmelnyk/scheduling/internal/database/entities"
 )
 
 type BookingHandler struct {
@@ -66,7 +66,7 @@ func (h *BookingHandler) ConfirmBooking(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.service.UpdateBookingStatus(r.Context(), id, int(e.Approved))
+	err = h.service.UpdateBookingStatus(r.Context(), id, int(entities.Approved))
 	if err != nil {
 		api.WriteError(w, err)
 	}
@@ -91,7 +91,7 @@ func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.UpdateBookingStatus(r.Context(), id, int(e.Cancelled))
+	err = h.service.UpdateBookingStatus(r.Context(), id, int(entities.Cancelled))
 	if err != nil {
 		api.WriteError(w, err)
 	}

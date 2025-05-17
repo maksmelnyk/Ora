@@ -12,24 +12,24 @@ import (
 
 	"github.com/maksmelnyk/scheduling/internal/apperrors"
 	"github.com/maksmelnyk/scheduling/internal/auth"
-	e "github.com/maksmelnyk/scheduling/internal/database/entities"
+	"github.com/maksmelnyk/scheduling/internal/database/entities"
 	"github.com/maksmelnyk/scheduling/internal/logger"
 	"github.com/maksmelnyk/scheduling/internal/messaging"
 	"github.com/maksmelnyk/scheduling/internal/products"
 )
 
 type ScheduleRepository interface {
-	GetWorkingPeriods(ctx context.Context, userId uuid.UUID, fromDate, toDate time.Time) ([]*e.WorkingPeriod, error)
-	GetScheduledEvents(ctx context.Context, workingPeriodIds []int64) ([]*e.ScheduledEvent, error)
-	GetBookings(ctx context.Context, workingPeriodIds []int64) ([]*e.Booking, error)
-	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*e.WorkingPeriod, error)
-	GetScheduledEventById(ctx context.Context, userId uuid.UUID, id int64) (*e.ScheduledEvent, error)
+	GetWorkingPeriods(ctx context.Context, userId uuid.UUID, fromDate, toDate time.Time) ([]*entities.WorkingPeriod, error)
+	GetScheduledEvents(ctx context.Context, workingPeriodIds []int64) ([]*entities.ScheduledEvent, error)
+	GetBookings(ctx context.Context, workingPeriodIds []int64) ([]*entities.Booking, error)
+	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*entities.WorkingPeriod, error)
+	GetScheduledEventById(ctx context.Context, userId uuid.UUID, id int64) (*entities.ScheduledEvent, error)
 	GetScheduledEventLessonIds(ctx context.Context, productId int64) ([]int64, error)
 	ProductScheduledEventExists(ctx context.Context, id int64, productId int64) (bool, error)
 	HasLinkedEvents(ctx context.Context, workingPeriodId int64) (bool, error)
-	AddWorkingPeriod(ctx context.Context, wd *e.WorkingPeriod) error
-	UpdateWorkingPeriod(ctx context.Context, wd *e.WorkingPeriod) error
-	AddScheduledEvent(ctx context.Context, se *e.ScheduledEvent) error
+	AddWorkingPeriod(ctx context.Context, workingPeriod *entities.WorkingPeriod) error
+	UpdateWorkingPeriod(ctx context.Context, workingPeriod *entities.WorkingPeriod) error
+	AddScheduledEvent(ctx context.Context, scheduledEvent *entities.ScheduledEvent) error
 	DeleteWorkingPeriod(ctx context.Context, userId uuid.UUID, id int64) error
 	DeleteScheduledEvent(ctx context.Context, userId uuid.UUID, id int64) error
 }

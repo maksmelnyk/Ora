@@ -8,11 +8,11 @@ import (
 
 	"github.com/maksmelnyk/scheduling/config"
 	"github.com/maksmelnyk/scheduling/internal/logger"
-	otelmetric "go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -20,8 +20,8 @@ import (
 type Telemetry struct {
 	shutdownFuncs []func(context.Context) error
 	Logger        *logger.AppLogger
-	Tracer        oteltrace.Tracer
-	Meter         otelmetric.Meter
+	Tracer        trace.Tracer
+	Meter         metric.Meter
 }
 
 func parseEndpoint(endpoint string) (string, error) {
