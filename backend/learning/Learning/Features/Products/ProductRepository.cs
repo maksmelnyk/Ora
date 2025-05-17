@@ -129,12 +129,11 @@ public class ProductRepository(AppDbContext db) : IProductRepository
         );
     }
 
-    public async Task SetProductHasEnrollmentAsync(long id, CancellationToken token)
+    public Task SetProductHasEnrollmentAsync(long id, CancellationToken token)
     {
-        var product = await db.Products.FirstOrDefaultAsync(e => e.Id == id, token) ?? throw new ResourceNotFoundException();
-
-        product.HasEnrollment = true;
-        await db.SaveChangesAsync(token);
+        return db.Products
+            .Where(e => e.Id == id)
+            .ExecuteUpdateAsync(e => e.SetProperty(i => i.HasEnrollment, true), token);
     }
 
     public async Task AddEntityAsync<T>(T entity, CancellationToken token)
