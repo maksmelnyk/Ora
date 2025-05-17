@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), ex.getCode(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(NotFoundException.class)
+    @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<Map<String, String>> handleNotFoundException(UnauthorizedException ex) {
         return buildErrorResponse(ex.getMessage(), ex.getCode(), HttpStatus.UNAUTHORIZED);
     }
