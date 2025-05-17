@@ -27,6 +27,7 @@ type ScheduleRepository interface {
 	GetScheduledEventLessonIds(ctx context.Context, productId int64) ([]int64, error)
 	ProductScheduledEventExists(ctx context.Context, id int64, productId int64) (bool, error)
 	HasLinkedEvents(ctx context.Context, workingPeriodId int64) (bool, error)
+	HasLinkedBookings(ctx context.Context, scheduledEventId int64) (bool, error)
 	AddWorkingPeriod(ctx context.Context, workingPeriod *entities.WorkingPeriod) error
 	UpdateWorkingPeriod(ctx context.Context, workingPeriod *entities.WorkingPeriod) error
 	AddScheduledEvent(ctx context.Context, scheduledEvent *entities.ScheduledEvent) error
@@ -198,7 +199,7 @@ func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, req
 
 	if hasEvent {
 		log.Error("cannot update working period with linked events")
-		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvents)
+		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvent)
 	}
 
 	MapRequestWithWorkingPeriod(request, workingPeriod)
@@ -228,7 +229,7 @@ func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) err
 
 	if hasEvent {
 		log.Error("cannot update working period with linked events")
-		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvents)
+		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvent)
 	}
 
 	err = s.repo.DeleteWorkingPeriod(ctx, userId, id)
@@ -334,6 +335,17 @@ func (s *ScheduleService) DeleteScheduledEvent(ctx context.Context, id int64) er
 	if err != nil {
 		log.Error("failed to get scheduled event by id", err)
 		return err
+	}
+
+	hasBooking, err := s.repo.HasLinkedBookings(ctx, id)
+	if err != nil {
+		log.Error("failed to check if booking exists", err)
+		return err
+	}
+
+	if hasBooking {
+		log.Error("cannot delete scheduled event with linked bookings")
+		return apperrors.NewConflict("Cannot delete scheduled event with linked bookings", apperrors.ErrScheduledEventHasBooking)
 	}
 
 	err = s.repo.DeleteScheduledEvent(ctx, userId, id)

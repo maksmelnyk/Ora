@@ -101,6 +101,14 @@ func (r *ScheduleRepo) HasLinkedEvents(ctx context.Context, workingPeriodId int6
 	return database.CheckExists(ctx, r.db, query, workingPeriodId)
 }
 
+// HasLinkedBookings checks if a booking exists for a specific scheduled event
+func (r *ScheduleRepo) HasLinkedBookings(ctx context.Context, scheduledEventId int64) (bool, error) {
+	const query = `
+		SELECT EXISTS (SELECT 1 FROM booking WHERE scheduled_event_id = $1);
+	`
+	return database.CheckExists(ctx, r.db, query, scheduledEventId)
+}
+
 // AddWorkingPeriod adds a new working period
 func (r *ScheduleRepo) AddWorkingPeriod(ctx context.Context, workingPeriod *entities.WorkingPeriod) error {
 	const query = `
