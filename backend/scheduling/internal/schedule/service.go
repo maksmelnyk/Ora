@@ -10,11 +10,11 @@ import (
 
 	"slices"
 
+	"github.com/maksmelnyk/scheduling/internal/auth"
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
 	ec "github.com/maksmelnyk/scheduling/internal/errors"
 	"github.com/maksmelnyk/scheduling/internal/logger"
 	"github.com/maksmelnyk/scheduling/internal/messaging"
-	mid "github.com/maksmelnyk/scheduling/internal/middleware"
 	"github.com/maksmelnyk/scheduling/internal/products"
 )
 
@@ -136,8 +136,9 @@ func (s *ScheduleService) GetScheduledEventMetadata(ctx context.Context, semr *S
 func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *WorkingPeriodRequest) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
+		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
 
@@ -166,8 +167,9 @@ func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *WorkingPeri
 func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr *WorkingPeriodRequest) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
+		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
 
@@ -205,8 +207,9 @@ func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr
 func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
+		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
 
@@ -238,8 +241,9 @@ func (s *ScheduleService) AddScheduledEvent(
 ) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
+		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
 
@@ -306,12 +310,13 @@ func (s *ScheduleService) AddScheduledEvent(
 func (s *ScheduleService) DeleteScheduledEvent(ctx context.Context, id int64) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
+		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
 
-	_, err := s.repo.GetScheduledEventById(ctx, userId, id)
+	_, err = s.repo.GetScheduledEventById(ctx, userId, id)
 	if err != nil {
 		log.Error("failed to get scheduled event by id", err)
 		if errors.Is(err, ec.ErrScheduleEventNotFound) {

@@ -13,12 +13,6 @@ import (
 	"github.com/maksmelnyk/scheduling/internal/logger"
 )
 
-type userClaimsKey string
-type userIdKey string
-
-const UserIdKey userIdKey = "user_id"
-const UserRolesKey userClaimsKey = "user_roles"
-
 // AuthMiddleware validates JWT tokens
 func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -60,13 +54,13 @@ func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(ne
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), UserIdKey, userId)
+			ctx := context.WithValue(r.Context(), auth.UserIdKey, userId)
 
 			realmAccess, ok := claims["realm_access"].(map[string]any)
 			if ok {
 				roles, ok := realmAccess["roles"].([]any)
 				if ok {
-					ctx = context.WithValue(ctx, UserRolesKey, roles)
+					ctx = context.WithValue(ctx, auth.UserRolesKey, roles)
 				}
 			}
 
@@ -79,7 +73,7 @@ func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(ne
 func RoleAuthMiddleware(requiredRole string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			roles, ok := r.Context().Value(UserRolesKey).([]any)
+			roles, ok := r.Context().Value(auth.UserRolesKey).([]any)
 			if !ok {
 				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "unauthorized"))
 				return

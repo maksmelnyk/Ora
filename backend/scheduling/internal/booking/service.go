@@ -8,13 +8,13 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/maksmelnyk/scheduling/internal/auth"
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
 	ec "github.com/maksmelnyk/scheduling/internal/errors"
 	"github.com/maksmelnyk/scheduling/internal/logger"
 	"github.com/maksmelnyk/scheduling/internal/messaging"
-	mid "github.com/maksmelnyk/scheduling/internal/middleware"
 	"github.com/maksmelnyk/scheduling/internal/products"
-	c "github.com/maksmelnyk/scheduling/internal/schedule"
+	"github.com/maksmelnyk/scheduling/internal/schedule"
 )
 
 type BookingRepository interface {
@@ -46,12 +46,13 @@ func NewBookingService(
 	return &BookingService{log: log, repo: repo, client: client, publisher: publisher}
 }
 
-func (s *BookingService) GetMyBookings(ctx context.Context, upcomingOnly bool, skip int, take int) ([]*c.BookingResponse, error) {
+func (s *BookingService) GetMyBookings(ctx context.Context, upcomingOnly bool, skip int, take int) ([]*schedule.BookingResponse, error) {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
-		return nil, ec.ErrInternalError
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
+		log.Error("User ID not found in context")
+		return nil, ec.ErrUserIdNotFound
 	}
 
 	var upcomingAfter *time.Time
@@ -66,14 +67,14 @@ func (s *BookingService) GetMyBookings(ctx context.Context, upcomingOnly bool, s
 		return nil, ec.ErrInternalError
 	}
 
-	return c.MapBookingsToResponse(bookings), nil
+	return schedule.MapBookingsToResponse(bookings), nil
 }
 
 func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest, authHeader string) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
 		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
@@ -179,8 +180,8 @@ func (s *BookingService) AddAutoBooking(ctx context.Context, request *messaging.
 func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, status int) error {
 	log := logger.FromContext(ctx, s.log)
 
-	userId, ok := ctx.Value(mid.UserIdKey).(uuid.UUID)
-	if !ok {
+	userId, err := auth.GetUserID(ctx)
+	if err != nil {
 		log.Error("User ID not found in context")
 		return ec.ErrUserIdNotFound
 	}
@@ -192,7 +193,10 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 	booking, err := s.repo.GetEducatorBookingById(ctx, userId, id)
 	if err != nil {
 		log.Error("Failed to retrieve booking", err)
-		return handleRepoError(err)
+		if errors.Is(err, ec.ErrBookingNotFound) {
+			return err
+		}
+		return ec.ErrInternalError
 	}
 
 	if booking.Status != e.Pending {
@@ -214,11 +218,4 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 	}
 
 	return nil
-}
-
-func handleRepoError(err error) error {
-	if errors.Is(err, ec.ErrBookingNotFound) {
-		return err
-	}
-	return ec.ErrInternalError
 }
