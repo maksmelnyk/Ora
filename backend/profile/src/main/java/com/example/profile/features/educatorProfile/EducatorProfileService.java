@@ -36,11 +36,11 @@ public class EducatorProfileService {
     private final UserProfileRepository profileRepository;
 
     public PagedResult<EducatorSummaryResponse> getEducatorProfiles(int pageNumber, int pageSize) {
-        PageRequest pageable = PageRequest.of(pageNumber - 1, pageSize);
+        PageRequest pageable = PageRequest.of(pageNumber - 1, pageSize,
+                Sort.by(Sort.Order.desc("hasProduct"), Sort.Order.desc("createdDate")));
 
         Page<EducatorProfile> educatorProfiles = this.repository.findByStatus(
-                EducatorVerificationStatus.APPROVED, pageable,
-                Sort.by(Sort.Order.desc("hasProduct"), Sort.Order.desc("createdDate")));
+                EducatorVerificationStatus.APPROVED, pageable);
 
         return new PagedResult<EducatorSummaryResponse>(
                 educatorProfiles.getContent().stream().map(mapper::toEducatorSummary).toList(),
