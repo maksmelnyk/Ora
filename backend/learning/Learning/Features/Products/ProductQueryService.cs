@@ -106,9 +106,7 @@ public sealed class ProductQueryService(
     {
         var product = await productRepository.GetProductByIdAsync(id, true, token);
         if (product is null)
-        {
             return null;
-        }
 
         var profiles = await profileService.GetEducatorsAsync([product.EducatorId], token);
 
@@ -127,7 +125,8 @@ public sealed class ProductQueryService(
 
         var userId = currentUser.GetUserId();
 
-        var product = await productRepository.GetProductByIdAsync(productId, false, token) ?? throw new ResourceNotFoundException();
+        var product = await productRepository.GetProductByIdAsync(productId, false, token)
+            ?? throw new NotFoundException("Product not found", ErrorCode.ProductNotFound);
 
         if (product.Type == ProductType.PrivateSession)
             return ProductPurchaseMetadataResponse.Success(product.Price);
@@ -165,7 +164,9 @@ public sealed class ProductQueryService(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var product = await productRepository.GetProductByIdAsync(productId, true, token) ?? throw new ResourceNotFoundException();
+        var product = await productRepository.GetProductByIdAsync(productId, true, token)
+            ?? throw new NotFoundException("Product not found", ErrorCode.ProductNotFound);
+
         if (product.EducatorId != currentUser.GetUserId())
             return new ProductSchedulingMetadataResponse(ProductSchedulingState.Invalid, ErrorMessage: "Invalid access to product");
 

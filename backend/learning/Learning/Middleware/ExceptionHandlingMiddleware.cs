@@ -18,26 +18,26 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 context,
                 "Validation failed",
                 "ERROR_VALIDATION",
-                (int)HttpStatusCode.UnprocessableEntity,
+                HttpStatusCode.UnprocessableEntity,
                 ex.Errors
             );
         }
-        catch (ResourceNotFoundException ex)
+        catch (NotFoundException ex)
         {
-            await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.NotFound);
+            await WriteErrorResponse(context, ex.Message, ex.Code, HttpStatusCode.NotFound);
         }
-        catch (InvalidRequestException ex)
+        catch (UnprocessableEntityException ex)
         {
-            await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.BadRequest);
+            await WriteErrorResponse(context, ex.Message, ex.Code, HttpStatusCode.UnprocessableEntity);
         }
         catch (ForbiddenException ex)
         {
-            await WriteErrorResponse(context, ex.Message, ex.ErrorCode, (int)HttpStatusCode.Forbidden);
+            await WriteErrorResponse(context, ex.Message, ex.Code, HttpStatusCode.Forbidden);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Request failed: ");
-            await WriteErrorResponse(context, "Unhandled exception occurred", "ERROR_INTERNAL_SERVER", (int)HttpStatusCode.InternalServerError);
+            await WriteErrorResponse(context, "Unhandled exception occurred", "ERROR_INTERNAL_SERVER", HttpStatusCode.InternalServerError);
         }
     }
 
@@ -45,11 +45,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         HttpContext context,
         string errorMessage,
         string errorCode,
-        int statusCode,
+        HttpStatusCode statusCode,
         IEnumerable<object> errors = null
     )
     {
-        context.Response.StatusCode = statusCode;
+        context.Response.StatusCode = (int)statusCode;
         context.Response.ContentType = "application/json";
 
         var response = new

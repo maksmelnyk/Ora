@@ -61,7 +61,9 @@ namespace Learning.Features.Products
         {
             await productUpdateRequestValidator.ValidateAndThrowAsync(request, token);
 
-            var product = await repo.GetProductByIdAsync(productId, false, token) ?? throw new ResourceNotFoundException();
+            var product = await repo.GetProductByIdAsync(productId, false, token)
+                ?? throw new NotFoundException("Product not found", ErrorCode.ProductNotFound);
+
             if (product.EducatorId != currentUser.GetUserId())
                 throw new ForbiddenException();
 
@@ -77,7 +79,8 @@ namespace Learning.Features.Products
 
         public async Task SetProductStatusAsync(long productId, CancellationToken token)
         {
-            var product = await repo.GetProductByIdAsync(productId, false, token) ?? throw new ResourceNotFoundException();
+            var product = await repo.GetProductByIdAsync(productId, false, token)
+                ?? throw new NotFoundException("Product not found", ErrorCode.ProductNotFound);
 
             if (product.EducatorId != currentUser.GetUserId())
                 throw new ForbiddenException();
@@ -88,12 +91,14 @@ namespace Learning.Features.Products
 
         public async Task DeleteProductAsync(long productId, CancellationToken token)
         {
-            var product = await repo.GetProductByIdAsync(productId, false, token) ?? throw new ResourceNotFoundException();
+            var product = await repo.GetProductByIdAsync(productId, false, token)
+                ?? throw new NotFoundException("Product not found", ErrorCode.ProductNotFound);
+
             if (product.EducatorId != currentUser.GetUserId())
                 throw new ForbiddenException();
 
             if (product.HasEnrollment)
-                throw new InvalidOperationException("Cannot delete a product with active enrollments");
+                throw new UnprocessableEntityException("Product has active enrollment", ErrorCode.ProductHasActiveEnrollment);
 
             product.DeletedAt = DateTime.UtcNow;
             await repo.UpdateEntityAsync(product, token);
@@ -104,7 +109,7 @@ namespace Learning.Features.Products
             await moduleCreateRequestValidator.ValidateAndThrowAsync(request, token);
 
             if (!await repo.ProductExistsAsync(productId, currentUser.GetUserId(), token))
-                throw new ResourceNotFoundException();
+                throw new NotFoundException("Product not found", ErrorCode.ProductNotFound);
 
             var module = ProductMapper.FromModuleCreateRequest(request);
             await repo.AddEntityAsync(module, token);
@@ -116,7 +121,8 @@ namespace Learning.Features.Products
         {
             await moduleUpdateRequestValidator.ValidateAndThrowAsync(request, token);
 
-            var module = await repo.GetModuleByIdAsync(moduleId, productId, currentUser.GetUserId(), token) ?? throw new ResourceNotFoundException();
+            var module = await repo.GetModuleByIdAsync(moduleId, productId, currentUser.GetUserId(), token)
+                ?? throw new NotFoundException("Module not found", ErrorCode.ModuleNotFound);
 
             ProductMapper.MapToModule(module, request);
             await repo.UpdateEntityAsync(module, token);
@@ -132,7 +138,7 @@ namespace Learning.Features.Products
             await lessonCreateRequestValidator.ValidateAndThrowAsync(request, token);
 
             if (!await repo.ModuleExistsAsync(moduleId, productId, currentUser.GetUserId(), token))
-                throw new ResourceNotFoundException();
+                throw new NotFoundException("Module not found", ErrorCode.ModuleNotFound);
 
             var lesson = ProductMapper.FromLessonCreateRequest(request);
             await repo.AddEntityAsync(lesson, token);
@@ -150,7 +156,7 @@ namespace Learning.Features.Products
                 productId,
                 currentUser.GetUserId(),
                 token
-            ) ?? throw new ResourceNotFoundException();
+            ) ?? throw new NotFoundException("Lesson not found", ErrorCode.LessonNotFound);
 
             ProductMapper.MapToLesson(lesson, request);
             await repo.UpdateEntityAsync(lesson, token);
@@ -163,7 +169,7 @@ namespace Learning.Features.Products
 
         public async Task SetProductScheduledAsync(long productId, string startTime, string endTime, CancellationToken token)
         {
-            var product = await repo.GetProductByIdAsync(productId, false, token) ?? throw new ResourceNotFoundException();
+            var product = await repo.GetProductByIdAsync(productId, false, token);
             if (product == null)
             {
                 logger.LogError("Product {product_id} not found", productId);
