@@ -1,10 +1,16 @@
 from typing import List
-from uuid import UUID
+from loguru import logger
 
+from app.exceptions.app_exception import (
+    UnauthorizedException,
+    UnprocessableEntityException,
+)
+from app.exceptions.error_codes import ErrorCode
 from app.infrastructure.clients.products.schemas import ProductPurchaseMetadataResponse
 from app.infrastructure.clients.products.service import ProductServiceClient
 from app.infrastructure.clients.scheduling.schemas import ScheduledEventMetadataResponse
 from app.infrastructure.clients.scheduling.service import SchedulingServiceClient
+from app.infrastructure.identity.current_user import CurrentUser
 from app.infrastructure.messaging.constants import RabbitMqConstants
 from app.infrastructure.messaging.events import (
     BookingCreationRequestedEvent,
@@ -20,21 +26,21 @@ from app.features.payment.transaction import Transaction, TransactionStatus
 class PaymentService:
     def __init__(
         self,
+        current_user: CurrentUser,
         repo: PaymentRepository,
         product_client: ProductServiceClient,
         scheduling_client: SchedulingServiceClient,
         publisher: Publisher,
     ) -> None:
+        self.current_user: CurrentUser = current_user
         self.repo: PaymentRepository = repo
         self.product_client: ProductServiceClient = product_client
         self.scheduling_client: SchedulingServiceClient = scheduling_client
         self.publisher: Publisher = publisher
 
-    async def get_my_payments(
-        self, user_id: UUID, skip: int, take: int
-    ) -> List[PaymentResponse]:
+    async def get_my_payments(self, skip: int, take: int) -> List[PaymentResponse]:
         payments: List[Transaction] = await self.repo.get_transactions_by_user_id(
-            user_id=user_id, skip=skip, take=take
+            user_id=self.current_user.id, skip=skip, take=take
         )
         payment_responses: List[PaymentResponse] = [
             PaymentResponse(
@@ -45,10 +51,12 @@ class PaymentService:
         return payment_responses
 
     async def create_payment(
-        self, user_id: UUID, request: PaymentCreateRequest, auth_header: str | None
+        self, request: PaymentCreateRequest, auth_header: str | None
     ) -> None:
         if auth_header is None:
-            raise ValueError("Authorization header is missing")
+            raise UnauthorizedException(
+                message="Unauthorized", code=ErrorCode.UNAUTHORIZED
+            )
 
         product_info: ProductPurchaseMetadataResponse = (
             await self.product_client.get_product_purchase_metadata(
@@ -59,10 +67,14 @@ class PaymentService:
         )
 
         if product_info.can_purchase is False:
-            raise ValueError("Product cannot be purchased")
+            raise UnprocessableEntityException(
+                message="Product cannot be purchased",
+                code=ErrorCode.PRODUCT_CANNOT_BE_PURCHASED,
+            )
 
         if product_info.error_message:
-            raise ValueError(product_info.error_message)
+            logger.error(product_info.error_message)
+            raise Exception("Product cannot be purchased")
 
         if product_info.scheduling_required:
             scheduling_info: ScheduledEventMetadataResponse = (
@@ -74,10 +86,11 @@ class PaymentService:
                 )
             )
             if scheduling_info.is_valid is False:
-                raise ValueError(scheduling_info.error_message)
+                logger.error(scheduling_info.error_message)
+                raise Exception("Product cannot be purchased")
 
         new_transaction = Transaction(
-            user_id=user_id,
+            user_id=self.current_user.id,
             product_id=request.product_id,
             scheduled_event_id=request.scheduled_event_id,
             price=product_info.price,

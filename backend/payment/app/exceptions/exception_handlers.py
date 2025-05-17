@@ -6,10 +6,11 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.exceptions.app_exception import (
-    AppHttpException,
+    AppHTTPException,
     AppException,
-    ResourceNotFoundException,
-    InvalidRequestException,
+    NotFoundException,
+    UnauthorizedException,
+    UnprocessableEntityException,
 )
 from app.exceptions.error_codes import ErrorCode
 
@@ -33,15 +34,17 @@ async def app_exception_handler(request: Request, exc: Exception) -> JSONRespons
     """Handle all custom app exceptions"""
     e: AppException = cast(AppException, exc)
 
-    if isinstance(exc, ResourceNotFoundException):
-        status_code = 404
-    elif isinstance(exc, InvalidRequestException):
-        status_code = 400
+    if isinstance(exc, UnauthorizedException):
+        status_code = HTTPStatus.UNAUTHORIZED
+    elif isinstance(exc, NotFoundException):
+        status_code = HTTPStatus.NOT_FOUND
+    elif isinstance(exc, UnprocessableEntityException):
+        status_code = HTTPStatus.UNPROCESSABLE_ENTITY
     else:
-        status_code = 500
+        status_code = HTTPStatus.INTERNAL_SERVER_ERROR
 
     return error_json_response(
-        status_code=status_code, message=e.message, error_code=e.error_code
+        status_code=status_code, message=e.message, error_code=e.code
     )
 
 
@@ -54,18 +57,18 @@ async def validation_exception_handler(
     return error_json_response(
         status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         message="Validation error",
-        error_code=ErrorCode.ERROR_MODEL_VALIDATION,
+        error_code=ErrorCode.MODEL_VALIDATION,
         details=details,
     )
 
 
 async def app_http_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle all custom app http exceptions"""
-    e: AppHttpException = cast(AppHttpException, exc)
+    e: AppHTTPException = cast(AppHTTPException, exc)
     return error_json_response(
         status_code=e.status_code,
         message=e.message,
-        error_code=e.error_code,
+        error_code=e.code,
     )
 
 
@@ -75,7 +78,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     return error_json_response(
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
         message="Internal server error",
-        error_code=ErrorCode.ERROR_INTERNAL_SERVER,
+        error_code=ErrorCode.INTERNAL_SERVER_ERROR,
     )
 
 
@@ -89,7 +92,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         handler=validation_exception_handler,
     )
     app.add_exception_handler(
-        exc_class_or_status_code=AppHttpException, handler=app_http_exception_handler
+        exc_class_or_status_code=AppHTTPException, handler=app_http_exception_handler
     )
     app.add_exception_handler(
         exc_class_or_status_code=Exception, handler=global_exception_handler

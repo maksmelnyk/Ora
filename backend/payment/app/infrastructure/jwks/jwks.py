@@ -2,10 +2,9 @@ import httpx
 
 from loguru import logger
 from datetime import datetime, timezone
-from http import HTTPStatus
 from typing import Optional, Dict, Any
 
-from app.exceptions.app_exception import AppHttpException
+from app.exceptions.app_exception import UnauthorizedException
 from app.exceptions.error_codes import ErrorCode
 
 
@@ -22,20 +21,18 @@ class JwksProvider:
             await self.__fetch_public_keys()
 
         if self.keys is None:
-            raise AppHttpException(
-                status_code=HTTPStatus.UNAUTHORIZED,
-                error_code=ErrorCode.ERROR_PUBLIC_KEY_FETCH,
-                message="Public keys could not be fetched",
+            logger.error("Failed to fetch public keys")
+            raise UnauthorizedException(
+                code=ErrorCode.INVALID_TOKEN, message="Invalid token"
             )
 
         for key in self.keys.get("keys", []):
             if key.get("kid") == kid:
                 return key
 
-        raise AppHttpException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            error_code=ErrorCode.ERROR_AUTHORIZATION_FAILED,
-            message="Invalid token: key not found",
+        logger.error(f"Key with KID {kid} not found in JWKS")
+        raise UnauthorizedException(
+            code=ErrorCode.INVALID_TOKEN, message="Invalid token"
         )
 
     async def __fetch_public_keys(self) -> None:
@@ -49,10 +46,8 @@ class JwksProvider:
                 self.last_update = datetime.now(tz=timezone.utc)
         except Exception as e:
             logger.exception("Failed to fetch JWKS: {error}", error=str(object=e))
-            raise AppHttpException(
-                status_code=HTTPStatus.UNAUTHORIZED,
-                error_code=ErrorCode.ERROR_PUBLIC_KEY_FETCH,
-                message="Failed to fetch public keys",
+            raise UnauthorizedException(
+                code=ErrorCode.INVALID_TOKEN, message="Invalid token"
             )
 
     def __keys_expired(self) -> bool:

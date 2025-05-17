@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     try:
         async with engine.connect() as conn:
-            await conn.execute(statement=text("SELECT 1"))
+            await conn.execute(statement=text(text="SELECT 1"))
         logger.info("Database connected successfully")
     except Exception as e:
         logger.error(f"Database connection failed: {e}")

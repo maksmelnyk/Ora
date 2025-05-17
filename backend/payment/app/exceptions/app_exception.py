@@ -1,23 +1,30 @@
 from fastapi import HTTPException
 
 
-class AppHttpException(HTTPException):
-    def __init__(self, status_code: int, error_code: str, message: str) -> None:
+class AppHTTPException(HTTPException):
+    def __init__(self, status_code: int, code: str, message: str) -> None:
         super().__init__(status_code=status_code)
-        self.error_code: str = error_code
+        self.code: str = code
         self.message: str = message
 
 
 class AppException(Exception):
-    def __init__(self, error_code: str, message: str) -> None:
+    def __init__(self, message: str, code: str) -> None:
         super().__init__(message)
-        self.error_code: str = error_code
+        self.code: str = code
         self.message: str = message
 
 
-class ResourceNotFoundException(AppException):
-    pass
+class UnauthorizedException(AppException):
+    def __init__(self, message: str, code: str) -> None:
+        super().__init__(message=message, code=code)
 
 
-class InvalidRequestException(AppException):
-    pass
+class NotFoundException(AppException):
+    def __init__(self, message: str, code: str) -> None:
+        super().__init__(message=message, code=code)
+
+
+class UnprocessableEntityException(AppException):
+    def __init__(self, message: str, code: str) -> None:
+        super().__init__(message=message, code=code)

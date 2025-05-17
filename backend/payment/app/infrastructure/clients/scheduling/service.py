@@ -1,4 +1,5 @@
 from typing import Optional
+from loguru import logger
 from httpx import AsyncClient, Response
 
 from app.config.settings import ExternalServiceSettings
@@ -33,6 +34,10 @@ class SchedulingServiceClient:
         )
 
         if response.status_code != 200:
+            logger.error(
+                "Failed to fetch scheduled event metadata: {error}",
+                error=response.text,
+            )
             raise Exception(f"Failed to fetch product info: {response.status_code}")
 
         return ScheduledEventMetadataResponse.model_validate(obj=response.json())

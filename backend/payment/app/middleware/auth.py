@@ -7,7 +7,7 @@ from fastapi import Request, Response
 from starlette.types import ASGIApp
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from app.exceptions.app_exception import AppHttpException
+from app.exceptions.app_exception import UnauthorizedException
 from app.exceptions.error_codes import ErrorCode
 from app.exceptions.exception_handlers import error_json_response
 from app.infrastructure.jwks.validator import TokenValidator
@@ -36,7 +36,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if not token or not token.startswith("Bearer "):
                 return error_json_response(
                     message="Invalid token",
-                    error_code=ErrorCode.ERROR_TOKEN_INVALID,
+                    error_code=ErrorCode.INVALID_TOKEN,
                     status_code=HTTPStatus.UNAUTHORIZED,
                 )
 
@@ -47,15 +47,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if user_id == None:
                 return error_json_response(
                     message="Invalid token: user id not found",
-                    error_code=ErrorCode.ERROR_TOKEN_INVALID,
+                    error_code=ErrorCode.INVALID_TOKEN,
                     status_code=HTTPStatus.UNAUTHORIZED,
                 )
 
             request.state.user_id = uuid.UUID(hex=user_id)
-        except AppHttpException as ae:
-            logger.error(f"Error occurred: {ae.error_code} / {ae.message}")
+        except UnauthorizedException as ae:
             return error_json_response(
-                message=ae.message, error_code=ae.error_code, status_code=ae.status_code
+                message=ae.message,
+                error_code=ae.code,
+                status_code=HTTPStatus.UNAUTHORIZED,
             )
         except Exception as e:
             logger.exception("Unexpected error: {error}", error=str(object=e))

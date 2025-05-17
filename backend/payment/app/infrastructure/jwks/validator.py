@@ -1,10 +1,9 @@
 from loguru import logger
-from http import HTTPStatus
 from jose import jwt, JWTError
 from jose.constants import ALGORITHMS
 from typing import Dict, Any
 
-from app.exceptions.app_exception import AppHttpException
+from app.exceptions.app_exception import UnauthorizedException
 from app.exceptions.error_codes import ErrorCode
 from app.infrastructure.jwks.jwks import JwksProvider
 
@@ -33,8 +32,6 @@ class TokenValidator:
             return payload
         except JWTError as e:
             logger.exception("Token validation error: {error}", error=str(object=e))
-            raise AppHttpException(
-                status_code=HTTPStatus.UNAUTHORIZED,
-                error_code=ErrorCode.ERROR_TOKEN_INVALID,
-                message="Invalid token",
+            raise UnauthorizedException(
+                code=ErrorCode.INVALID_TOKEN, message="Invalid token"
             )
