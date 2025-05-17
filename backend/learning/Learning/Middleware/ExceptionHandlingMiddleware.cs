@@ -54,9 +54,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
         var response = new
         {
-            StatusCode = statusCode,
-            ErrorCode = errorCode,
-            ErrorMessage = errorMessage,
+            Code = errorCode,
+            Message = errorMessage,
             Details = errors
         };
         await context.Response.WriteAsJsonAsync(response);
