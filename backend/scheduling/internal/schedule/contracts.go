@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/maksmelnyk/scheduling/internal/validation"
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 )
 
 // swagger:model ScheduleResponse
@@ -76,24 +76,87 @@ type ScheduledEventMetadataResponse struct {
 }
 
 func (s *ScheduledEventRequest) Validate() error {
+	var errors []apperrors.ValidationErrorDetail
+
 	if s.ProductId <= 0 {
-		return validation.NewValidationError("SessionId", "must be greater than 0")
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "SessionId",
+			Message: "must be greater than 0",
+		})
 	}
 	if s.WorkingPeriodId <= 0 {
-		return validation.NewValidationError("SessionId", "must be greater than 0")
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "WorkingPeriodId",
+			Message: "must be greater than 0",
+		})
 	}
-	if s.StartTime.After(s.EndTime) {
-		return validation.NewValidationError("StartTime", "must be before EndTime")
+
+	if s.StartTime.IsZero() {
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "StartTime",
+			Message: "must not be empty",
+		})
 	}
+
+	if s.EndTime.IsZero() {
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "EndTime",
+			Message: "must not be empty",
+		})
+	}
+
+	if !s.StartTime.IsZero() && !s.EndTime.IsZero() {
+		if s.StartTime.After(s.EndTime) {
+			errors = append(errors, apperrors.ValidationErrorDetail{
+				Field:   "StartTime",
+				Message: "must be before EndTime",
+			})
+		}
+	}
+
+	if len(errors) > 0 {
+		return apperrors.NewValidation("Scheduled event request data failed validation", apperrors.ErrValidationFailed, errors)
+	}
+
 	return nil
 }
 
 func (w *WorkingPeriodRequest) Validate() error {
+	var errors []apperrors.ValidationErrorDetail
+
 	if w.StartTime.Before(time.Now().Truncate(24 * time.Hour)) {
-		return validation.NewValidationError("Date", "must not be in the past")
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "StartTime",
+			Message: "must not be in the past",
+		})
 	}
-	if w.StartTime.After(w.EndTime) {
-		return validation.NewValidationError("StartTime", "must be before EndTime")
+
+	if w.StartTime.IsZero() {
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "StartTime",
+			Message: "must not be empty",
+		})
 	}
+
+	if w.EndTime.IsZero() {
+		errors = append(errors, apperrors.ValidationErrorDetail{
+			Field:   "EndTime",
+			Message: "must not be empty",
+		})
+	}
+
+	if !w.StartTime.IsZero() && !w.EndTime.IsZero() {
+		if w.StartTime.After(w.EndTime) {
+			errors = append(errors, apperrors.ValidationErrorDetail{
+				Field:   "StartTime",
+				Message: "must be before EndTime",
+			})
+		}
+	}
+
+	if len(errors) > 0 {
+		return apperrors.NewValidation("Working period request data failed validation", apperrors.ErrValidationFailed, errors)
+	}
+
 	return nil
 }

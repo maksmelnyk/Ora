@@ -10,14 +10,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 )
 
 func FetchMultiple[T any](ctx context.Context, db *sqlx.DB, query string, args ...any) ([]*T, error) {
 	var results []*T
 	err := db.SelectContext(ctx, &results, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.NewInternal(err)
 	}
 	return results, nil
 }
@@ -27,9 +27,9 @@ func FetchSingle[T any](ctx context.Context, db *sqlx.DB, query string, args ...
 	err := db.GetContext(ctx, &result, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ec.ErrBookingNotFound
+			return nil, apperrors.NewNotFound(getTypeName(result)+" not found", apperrors.ErrResourceNotFound, err)
 		}
-		return nil, err
+		return nil, apperrors.NewInternal(err)
 	}
 	return &result, nil
 }
@@ -37,7 +37,7 @@ func FetchSingle[T any](ctx context.Context, db *sqlx.DB, query string, args ...
 func ExecNamedQuery(ctx context.Context, db *sqlx.DB, query string, arg any) error {
 	_, err := db.NamedExecContext(ctx, query, arg)
 	if err != nil {
-		return err
+		return apperrors.NewInternal(err)
 	}
 	return nil
 }
@@ -46,14 +46,14 @@ func ExecNamedQueryWithResult[T any](ctx context.Context, db *sqlx.DB, query str
 	stmt, err := db.PrepareNamedContext(ctx, query)
 	if err != nil {
 		var zero T
-		return zero, err
+		return zero, apperrors.NewInternal(err)
 	}
 
 	var result T
 	err = stmt.GetContext(ctx, &result, arg)
 	if err != nil {
 		var zero T
-		return zero, err
+		return zero, apperrors.NewInternal(err)
 	}
 
 	return result, nil
@@ -62,7 +62,7 @@ func ExecNamedQueryWithResult[T any](ctx context.Context, db *sqlx.DB, query str
 func ExecQuery(ctx context.Context, db *sqlx.DB, query string, args ...any) error {
 	_, err := db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return err
+		return apperrors.NewInternal(err)
 	}
 	return nil
 }
@@ -75,28 +75,31 @@ func ExecInsertMany(ctx context.Context, db *sqlx.DB, table string, items []any,
 
 	columns, err := GetDBColumns(items[0], skipColumns...)
 	if err != nil {
-		return err
+		return apperrors.NewInternal(err)
 	}
 
 	query, err := BuildInsertQuery(table, columns, len(items), db)
 	if err != nil {
-		return err
+		return apperrors.NewInternal(err)
 	}
 
 	args, err := FlattenValues(items, columns)
 	if err != nil {
-		return err
+		return apperrors.NewInternal(err)
 	}
 
 	_, err = db.ExecContext(ctx, query, args...)
-	return err
+	if err != nil {
+		return apperrors.NewInternal(err)
+	}
+	return nil
 }
 
 func CheckExists(ctx context.Context, db *sqlx.DB, query string, args ...any) (bool, error) {
 	var exists bool
 	err := db.GetContext(ctx, &exists, query, args...)
 	if err != nil {
-		return false, err
+		return false, apperrors.NewInternal(err)
 	}
 	return exists, nil
 }
@@ -118,7 +121,7 @@ func GetDBColumns(obj any, skip ...string) ([]string, error) {
 
 	var columns []string
 	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		dbTag := field.Tag.Get("db")
 		if dbTag == "-" || dbTag == "" {
@@ -179,4 +182,15 @@ func FlattenValues(objs []any, columns []string) ([]any, error) {
 		}
 	}
 	return args, nil
+}
+
+func getTypeName[T any](result T) string {
+	var typeName string
+	typ := reflect.TypeOf(result)
+	if typ.Kind() == reflect.Ptr {
+		typeName = typ.Elem().Name()
+	} else {
+		typeName = typ.Name()
+	}
+	return typeName
 }

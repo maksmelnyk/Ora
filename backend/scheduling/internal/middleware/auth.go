@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
-	hh "github.com/maksmelnyk/scheduling/internal/http"
+	"github.com/maksmelnyk/scheduling/internal/api"
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 
 	"github.com/google/uuid"
 	"github.com/maksmelnyk/scheduling/internal/auth"
@@ -30,27 +30,29 @@ func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(ne
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "missing authorization header"))
+				log.Error("missing authorization header")
+				api.WriteError(w, apperrors.NewUnauthorized("Missing authorization header"))
 				return
 			}
 
 			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 			if tokenString == authHeader {
-				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "invalid authorization header format"))
+				log.Error("invalid authorization header format")
+				api.WriteError(w, apperrors.NewUnauthorized("Invalid token"))
 				return
 			}
 
 			claims, err := validator.ValidateToken(tokenString)
 			if err != nil {
 				log.Error("invalid token", err)
-				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "invalid token"))
+				api.WriteError(w, apperrors.NewUnauthorized("Invalid token", err))
 				return
 			}
 
 			userId, err := uuid.Parse(claims["sub"].(string))
 			if err != nil {
 				log.Error("invalid user id", err)
-				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "invalid user id"))
+				api.WriteError(w, apperrors.NewUnauthorized("Invalid token", err))
 				return
 			}
 
@@ -75,7 +77,7 @@ func RoleAuthMiddleware(requiredRole string) func(next http.Handler) http.Handle
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			roles, ok := r.Context().Value(auth.UserRolesKey).([]any)
 			if !ok {
-				hh.WriteError(w, hh.NewUnauthorizedError(ec.ErrAuthFailed.Error(), "unauthorized"))
+				api.WriteError(w, apperrors.NewUnauthorized("Invalid token"))
 				return
 			}
 
@@ -86,7 +88,7 @@ func RoleAuthMiddleware(requiredRole string) func(next http.Handler) http.Handle
 				}
 			}
 
-			hh.WriteError(w, hh.NewForbiddenError(ec.ErrAuthFailed.Error(), "forbidden"))
+			api.WriteError(w, apperrors.NewForbidden("Access denied"))
 		})
 	}
 }

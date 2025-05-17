@@ -3,14 +3,15 @@ package booking
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 	"github.com/maksmelnyk/scheduling/internal/auth"
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
 	"github.com/maksmelnyk/scheduling/internal/logger"
 	"github.com/maksmelnyk/scheduling/internal/messaging"
 	"github.com/maksmelnyk/scheduling/internal/products"
@@ -51,8 +52,7 @@ func (s *BookingService) GetMyBookings(ctx context.Context, upcomingOnly bool, s
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return nil, ec.ErrUserIdNotFound
+		return nil, apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	var upcomingAfter *time.Time
@@ -64,7 +64,7 @@ func (s *BookingService) GetMyBookings(ctx context.Context, upcomingOnly bool, s
 	bookings, err := s.repo.GetBookingsByUserId(ctx, userId, upcomingAfter, skip, take)
 	if err != nil {
 		log.Error("failed to get bookings", err)
-		return nil, ec.ErrInternalError
+		return nil, err
 	}
 
 	return schedule.MapBookingsToResponse(bookings), nil
@@ -75,55 +75,59 @@ func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	hasBooking, err := s.repo.HasBookingByEnrollmentId(ctx, request.EnrollmentId)
 	if err != nil {
 		log.Error("Failed to check existing booking", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	if hasBooking {
 		log.Error("Booking already exists for this enrollment")
-		return ec.ErrBookingAlreadyExists
+		return apperrors.NewConflict("Booking already exists for this enrollment", apperrors.ErrBookingAlreadyExists)
 	}
 
 	durationMin := int(math.Round(request.EndTime.Sub(request.StartTime).Minutes()))
 	metadata, err := s.client.GetBookingMetadata(ctx, request.EnrollmentId, durationMin, authHeader)
 	if err != nil {
+		log.Error("Failed to get booking metadata", err)
 		return err
 	}
 
 	if !metadata.IsValid {
-		return errors.New(metadata.ErrorMessage)
+		log.Error(metadata.ErrorMessage)
+		return errors.New("invalid booking metadata")
 	}
 
 	educatorId, err := uuid.Parse(metadata.EducatorId)
 	if err != nil {
+		log.Error("Failed to parse educator ID", err)
 		return err
 	}
 
 	workingPeriod, err := s.repo.GetWorkingPeriodById(ctx, educatorId, request.WorkingPeriodId)
 	if err != nil {
+		log.Error("Failed to retrieve working period", err)
 		return err
 	}
 
 	if !workingPeriod.StartTime.Before(request.StartTime) || !workingPeriod.EndTime.After(request.EndTime) {
 		log.Error("booking outside working hours")
-		return ec.ErrScheduleEventOutsideWorkingHours
+		return apperrors.NewUnprocessedEntity("Booking outside working hours", apperrors.ErrBookingHours)
 	}
 
 	scheduledEvents, err := s.repo.GetScheduledEvents(ctx, request.WorkingPeriodId)
 	if err != nil {
+		log.Error("Failed to retrieve scheduled events", err)
 		return err
 	}
 
 	for _, event := range scheduledEvents {
 		if event.ProductId != *metadata.ProductId && request.StartTime.Before(event.EndTime) && request.EndTime.After(event.StartTime) {
 			log.Errorf("Booking overlaps with scheduled event: %d", event.Id)
-			return ec.ErrScheduleEventOverlapBooking
+			return apperrors.NewUnprocessedEntity("Booking overlaps with scheduled event", apperrors.ErrBookingHours)
 		}
 	}
 
@@ -131,7 +135,7 @@ func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest
 
 	if err := s.repo.AddBooking(ctx, booking); err != nil {
 		log.Error("Failed to add booking", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	return nil
@@ -183,30 +187,28 @@ func (s *BookingService) UpdateBookingStatus(ctx context.Context, id int64, stat
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
 		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	if status != int(e.Approved) && status != int(e.Cancelled) {
-		return ec.ErrBookingStatusInvalid
+		log.Error("Invalid booking status: " + fmt.Sprintf("%d", status))
+		return apperrors.NewBadRequestError("Invalid booking status", apperrors.ErrParameterInvalid)
 	}
 
 	booking, err := s.repo.GetEducatorBookingById(ctx, userId, id)
 	if err != nil {
 		log.Error("Failed to retrieve booking", err)
-		if errors.Is(err, ec.ErrBookingNotFound) {
-			return err
-		}
-		return ec.ErrInternalError
+		return err
 	}
 
 	if booking.Status != e.Pending {
 		log.Errorf("Booking status already updated: %d", booking.Status)
-		return ec.ErrBookingStatusUpdateRestricted
+		return apperrors.NewUnprocessedEntity("Booking completed", apperrors.ErrBookingStatus)
 	}
 
 	if err := s.repo.SetBookingStatus(ctx, id, userId, status); err != nil {
 		log.Error("Failed to update booking status", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	if status == int(e.Approved) {

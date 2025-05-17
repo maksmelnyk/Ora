@@ -3,14 +3,10 @@ package schedule
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
-	hh "github.com/maksmelnyk/scheduling/internal/http"
+	"github.com/maksmelnyk/scheduling/internal/api"
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 )
 
 type ScheduleHandler struct {
@@ -35,31 +31,31 @@ func NewScheduleHandler(service *ScheduleService) *ScheduleHandler {
 // @Router       /api/v1/schedules/{userId} [get]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) GetUserSchedule(w http.ResponseWriter, r *http.Request) {
-	userId, err := uuid.Parse(chi.URLParam(r, "userId"))
+	userId, err := api.ParseUUIDParam(w, r, "userId")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Invalid user ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
-	fromDate, err := time.Parse(time.RFC3339, r.URL.Query().Get("fromDate"))
+	fromDate, err := api.ParseTimeQuery(w, r, "fromDate", time.RFC3339)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "fromDate is required"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
-	toDate, err := time.Parse(time.RFC3339, r.URL.Query().Get("toDate"))
+	toDate, err := api.ParseTimeQuery(w, r, "toDate", time.RFC3339)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "toDate is required"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
 	schedule, err := h.service.GetScheduleByUserId(r.Context(), userId, fromDate, toDate)
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 
-	hh.WriteJson(w, http.StatusOK, schedule)
+	api.WriteJson(w, http.StatusOK, schedule)
 }
 
 // GetScheduledEventMetadata retrieves metadata for a scheduled event.
@@ -74,20 +70,20 @@ func (h *ScheduleHandler) GetUserSchedule(w http.ResponseWriter, r *http.Request
 // @Router       /api/v1/schedules/scheduled-events/metadata [post]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) GetScheduledEventMetadata(w http.ResponseWriter, r *http.Request) {
-	var semr *ScheduledEventMetadataRequest
-	err := json.NewDecoder(r.Body).Decode(&semr)
+	var request *ScheduledEventMetadataRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Error parsing request body"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrJsonDecodingFailed))
 		return
 	}
 
-	schedule, err := h.service.GetScheduledEventMetadata(r.Context(), semr)
+	schedule, err := h.service.GetScheduledEventMetadata(r.Context(), request)
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 
-	hh.WriteJson(w, http.StatusOK, schedule)
+	api.WriteJson(w, http.StatusOK, schedule)
 }
 
 // AddWorkingPeriod adds a new working period for an educator.
@@ -102,21 +98,21 @@ func (h *ScheduleHandler) GetScheduledEventMetadata(w http.ResponseWriter, r *ht
 // @Router       /api/v1/schedules/working-periods [post]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) AddWorkingPeriod(w http.ResponseWriter, r *http.Request) {
-	var workingPeriod *WorkingPeriodRequest
-	err := json.NewDecoder(r.Body).Decode(&workingPeriod)
+	var request *WorkingPeriodRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Error parsing request body"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrJsonDecodingFailed))
 		return
 	}
 
-	if err := workingPeriod.Validate(); err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), err.Error()))
+	if err := request.Validate(); err != nil {
+		api.WriteError(w, err)
 		return
 	}
 
-	err = h.service.AddWorkingPeriod(r.Context(), workingPeriod)
+	err = h.service.AddWorkingPeriod(r.Context(), request)
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 
@@ -136,27 +132,27 @@ func (h *ScheduleHandler) AddWorkingPeriod(w http.ResponseWriter, r *http.Reques
 // @Router       /api/v1/schedules/working-periods/{id} [put]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) UpdateWorkingPeriod(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := api.ParseLongParam(w, r, "id")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "invalid ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
-	var workingPeriod *WorkingPeriodRequest
-	err = json.NewDecoder(r.Body).Decode(&workingPeriod)
+	var request *WorkingPeriodRequest
+	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Error parsing request body"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrJsonDecodingFailed))
 		return
 	}
 
-	if err := workingPeriod.Validate(); err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), err.Error()))
+	if err := request.Validate(); err != nil {
+		api.WriteError(w, err)
 		return
 	}
 
-	err = h.service.UpdateWorkingPeriod(r.Context(), id, workingPeriod)
+	err = h.service.UpdateWorkingPeriod(r.Context(), id, request)
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 
@@ -174,15 +170,15 @@ func (h *ScheduleHandler) UpdateWorkingPeriod(w http.ResponseWriter, r *http.Req
 // @Router       /api/v1/schedules/working-periods/{id} [delete]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) DeleteWorkingPeriod(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := api.ParseLongParam(w, r, "id")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "invalid ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
 	err = h.service.DeleteWorkingPeriod(r.Context(), id)
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 
@@ -202,27 +198,27 @@ func (h *ScheduleHandler) DeleteWorkingPeriod(w http.ResponseWriter, r *http.Req
 // @Router       /api/v1/schedules/working-periods/{workingPeriodId}/events [post]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) AddScheduledEvent(w http.ResponseWriter, r *http.Request) {
-	workingPeriodId, err := strconv.ParseInt(chi.URLParam(r, "workingPeriodId"), 10, 64)
+	workingPeriodId, err := api.ParseLongParam(w, r, "workingPeriodId")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "invalid ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
-	var scheduledEvent *ScheduledEventRequest
-	err = json.NewDecoder(r.Body).Decode(&scheduledEvent)
+	var request *ScheduledEventRequest
+	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Error parsing request body"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrJsonDecodingFailed))
 		return
 	}
 
-	if err := scheduledEvent.Validate(); err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), err.Error()))
+	if err := request.Validate(); err != nil {
+		api.WriteError(w, err)
 		return
 	}
 
-	err = h.service.AddScheduledEvent(r.Context(), workingPeriodId, scheduledEvent, r.Header.Get("Authorization"))
+	err = h.service.AddScheduledEvent(r.Context(), workingPeriodId, request, r.Header.Get("Authorization"))
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 
@@ -240,15 +236,15 @@ func (h *ScheduleHandler) AddScheduledEvent(w http.ResponseWriter, r *http.Reque
 // @Router       /api/v1/schedules/events/{id} [delete]
 // @Security 	 BearerAuth
 func (h *ScheduleHandler) DeleteScheduledEvent(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := api.ParseLongParam(w, r, "id")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "invalid ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
 	err = h.service.DeleteScheduledEvent(r.Context(), id)
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 		return
 	}
 

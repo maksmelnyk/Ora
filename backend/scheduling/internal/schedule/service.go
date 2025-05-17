@@ -10,9 +10,9 @@ import (
 
 	"slices"
 
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 	"github.com/maksmelnyk/scheduling/internal/auth"
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
 	"github.com/maksmelnyk/scheduling/internal/logger"
 	"github.com/maksmelnyk/scheduling/internal/messaging"
 	"github.com/maksmelnyk/scheduling/internal/products"
@@ -56,7 +56,7 @@ func (s *ScheduleService) GetScheduleByUserId(ctx context.Context, userId uuid.U
 	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, fromDate, toDate)
 	if err != nil {
 		log.Error("failed to get working periods", err)
-		return nil, ec.ErrInternalError
+		return nil, err
 	}
 
 	if len(workingPeriods) == 0 {
@@ -71,13 +71,13 @@ func (s *ScheduleService) GetScheduleByUserId(ctx context.Context, userId uuid.U
 	scheduledEvents, err := s.repo.GetScheduledEvents(ctx, workingPeriodIds)
 	if err != nil {
 		log.Error("failed to get scheduled events", err)
-		return nil, ec.ErrInternalError
+		return nil, err
 	}
 
 	bookings, err := s.repo.GetBookings(ctx, workingPeriodIds)
 	if err != nil {
 		log.Error("failed to get bookings", err)
-		return nil, ec.ErrInternalError
+		return nil, err
 	}
 
 	schedule := &ScheduleResponse{
@@ -89,17 +89,17 @@ func (s *ScheduleService) GetScheduleByUserId(ctx context.Context, userId uuid.U
 	return schedule, nil
 }
 
-func (s *ScheduleService) GetScheduledEventMetadata(ctx context.Context, semr *ScheduledEventMetadataRequest) (*ScheduledEventMetadataResponse, error) {
+func (s *ScheduleService) GetScheduledEventMetadata(ctx context.Context, request *ScheduledEventMetadataRequest) (*ScheduledEventMetadataResponse, error) {
 	log := logger.FromContext(ctx, s.log)
 
-	if (semr.LessonIds == nil || slices.Contains(semr.LessonIds, 0)) && semr.ScheduledEventId == nil {
+	if (request.LessonIds == nil || slices.Contains(request.LessonIds, 0)) && request.ScheduledEventId == nil {
 		msg := "either lessonIds or scheduledEventId must be provided"
 		log.Error(msg)
 		return &ScheduledEventMetadataResponse{ErrorMessage: msg}, nil
 	}
 
-	if semr.ScheduledEventId != nil {
-		exists, err := s.repo.ProductScheduledEventExists(ctx, *semr.ScheduledEventId, semr.ProductId)
+	if request.ScheduledEventId != nil {
+		exists, err := s.repo.ProductScheduledEventExists(ctx, *request.ScheduledEventId, request.ProductId)
 		if err != nil {
 			msg := "failed to check if scheduled event exists"
 			log.Error(msg, err)
@@ -113,15 +113,15 @@ func (s *ScheduleService) GetScheduledEventMetadata(ctx context.Context, semr *S
 		}
 	}
 
-	if semr.LessonIds != nil {
-		lessonIds, err := s.repo.GetScheduledEventLessonIds(ctx, semr.ProductId)
+	if request.LessonIds != nil {
+		lessonIds, err := s.repo.GetScheduledEventLessonIds(ctx, request.ProductId)
 		if err != nil {
 			msg := "failed to get scheduled event lesson ids"
 			log.Error(msg, err)
 			return &ScheduledEventMetadataResponse{ErrorMessage: msg}, err
 		}
 
-		for _, lessonId := range semr.LessonIds {
+		for _, lessonId := range request.LessonIds {
 			if !slices.Contains(lessonIds, lessonId) {
 				msg := "lesson does not exist"
 				log.Error("lesson does not exist")
@@ -133,72 +133,67 @@ func (s *ScheduleService) GetScheduledEventMetadata(ctx context.Context, semr *S
 	return &ScheduledEventMetadataResponse{IsValid: true}, nil
 }
 
-func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, wpr *WorkingPeriodRequest) error {
+func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, request *WorkingPeriodRequest) error {
 	log := logger.FromContext(ctx, s.log)
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
-	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, wpr.StartTime, wpr.EndTime)
+	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, request.StartTime, request.EndTime)
 	if err != nil {
 		log.Error("failed to get working periods", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	for _, wp := range workingPeriods {
-		if wpr.StartTime.Before(wp.EndTime) && wpr.EndTime.After(wp.StartTime) {
-			log.Error("scheduled event overlaps with a booking")
-			return ec.ErrWorkingPeriodOverlap
+		if request.StartTime.Before(wp.EndTime) && request.EndTime.After(wp.StartTime) {
+			log.Error("working period overlaps with existing working period")
+			return apperrors.NewUnprocessedEntity("Working period overlaps with existing working period", apperrors.ErrWorkingPeriodHours)
 		}
 	}
 
-	err = s.repo.AddWorkingPeriod(ctx, MapRequestToWorkingPeriod(userId, wpr))
+	err = s.repo.AddWorkingPeriod(ctx, MapRequestToWorkingPeriod(userId, request))
 	if err != nil {
 		log.Error("failed to add working period", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	return nil
 }
 
-func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, wpr *WorkingPeriodRequest) error {
+func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, request *WorkingPeriodRequest) error {
 	log := logger.FromContext(ctx, s.log)
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	workingPeriod, err := s.repo.GetWorkingPeriodById(ctx, userId, id)
 	if err != nil {
 		log.Error("failed to get working period by id", err)
-		if errors.Is(err, ec.ErrWorkingPeriodNotFound) {
-			return err
-		}
-		return ec.ErrInternalError
+		return err
 	}
 
 	hasEvent, err := s.repo.HasLinkedEvents(ctx, id)
 	if err != nil {
 		log.Error("failed to check if booking exists", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	if hasEvent {
-		log.Error("cannot update working period on a day with bookings")
-		return ec.ErrBookingConflict
+		log.Error("cannot update working period with linked events")
+		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvents)
 	}
 
-	MapRequestWithWorkingPeriod(wpr, workingPeriod)
+	MapRequestWithWorkingPeriod(request, workingPeriod)
 
 	err = s.repo.UpdateWorkingPeriod(ctx, workingPeriod)
 	if err != nil {
 		log.Error("failed to update working period", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	return nil
@@ -209,25 +204,24 @@ func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) err
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	hasEvent, err := s.repo.HasLinkedEvents(ctx, id)
 	if err != nil {
 		log.Error("failed to check if booking exists", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	if hasEvent {
-		log.Error("cannot update working period on a day with bookings")
-		return ec.ErrBookingConflict
+		log.Error("cannot update working period with linked events")
+		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvents)
 	}
 
 	err = s.repo.DeleteWorkingPeriod(ctx, userId, id)
 	if err != nil {
 		log.Error("failed to delete working period", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	return nil
@@ -236,46 +230,41 @@ func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) err
 func (s *ScheduleService) AddScheduledEvent(
 	ctx context.Context,
 	workingPeriodId int64,
-	ser *ScheduledEventRequest,
+	request *ScheduledEventRequest,
 	authHeader string,
 ) error {
 	log := logger.FromContext(ctx, s.log)
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	workingPeriod, err := s.repo.GetWorkingPeriodById(ctx, userId, workingPeriodId)
 	if err != nil {
 		log.Error("failed to get working period by id", err)
-		if errors.Is(err, ec.ErrWorkingPeriodNotFound) {
-			return err
-		}
-		return ec.ErrInternalError
+		return err
 	}
 
-	if ser.StartTime.Before(workingPeriod.StartTime) || ser.EndTime.After(workingPeriod.EndTime) {
+	if request.StartTime.Before(workingPeriod.StartTime) || request.EndTime.After(workingPeriod.EndTime) {
 		log.Error("scheduled event outside working hours")
-		return ec.ErrScheduleEventOutsideWorkingHours
+		return apperrors.NewUnprocessedEntity("Scheduled event outside working hours", apperrors.ErrScheduledEventHours)
 	}
 
 	bookings, err := s.repo.GetBookings(ctx, []int64{workingPeriodId})
 	if err != nil {
-
 		return err
 	}
 
 	for _, booking := range bookings {
-		if ser.StartTime.Before(booking.EndTime) && ser.EndTime.After(booking.StartTime) {
+		if request.StartTime.Before(booking.EndTime) && request.EndTime.After(booking.StartTime) {
 			log.Errorf("scheduled event overlaps with a booking")
-			return ec.ErrScheduleEventOverlapBooking
+			return apperrors.NewUnprocessedEntity("Scheduled event overlaps with a booking", apperrors.ErrScheduledEventHours)
 		}
 	}
 
-	durationMin := int(math.Round(ser.EndTime.Sub(ser.StartTime).Minutes()))
-	pi, err := s.client.GetSchedulingMetadata(ctx, ser.ProductId, ser.LessonId, durationMin, authHeader)
+	durationMin := int(math.Round(request.EndTime.Sub(request.StartTime).Minutes()))
+	pi, err := s.client.GetSchedulingMetadata(ctx, request.ProductId, request.LessonId, durationMin, authHeader)
 	if err != nil {
 		return err
 	}
@@ -288,19 +277,19 @@ func (s *ScheduleService) AddScheduledEvent(
 		return errors.New("product is unschedulable")
 	}
 
-	err = s.repo.AddScheduledEvent(ctx, MapRequestToScheduledEvent(ser, userId, workingPeriodId, pi.Title, pi.MaxParticipants))
+	err = s.repo.AddScheduledEvent(ctx, MapRequestToScheduledEvent(request, userId, workingPeriodId, pi.Title, pi.MaxParticipants))
 	if err != nil {
 		log.Error("failed to add scheduled event", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	s.publisher.Publish(
 		ctx,
 		messaging.EventScheduledKey,
 		messaging.NewEventScheduledEvent(
-			ser.ProductId,
-			ser.StartTime.Format(time.RFC3339),
-			ser.EndTime.Format(time.RFC3339),
+			request.ProductId,
+			request.StartTime.Format(time.RFC3339),
+			request.EndTime.Format(time.RFC3339),
 		),
 	)
 
@@ -312,23 +301,19 @@ func (s *ScheduleService) DeleteScheduledEvent(ctx context.Context, id int64) er
 
 	userId, err := auth.GetUserID(ctx)
 	if err != nil {
-		log.Error("User ID not found in context")
-		return ec.ErrUserIdNotFound
+		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
 	_, err = s.repo.GetScheduledEventById(ctx, userId, id)
 	if err != nil {
 		log.Error("failed to get scheduled event by id", err)
-		if errors.Is(err, ec.ErrScheduleEventNotFound) {
-			return err
-		}
-		return ec.ErrInternalError
+		return err
 	}
 
 	err = s.repo.DeleteScheduledEvent(ctx, userId, id)
 	if err != nil {
 		log.Error("failed to delete scheduled event", err)
-		return ec.ErrInternalError
+		return err
 	}
 
 	return nil

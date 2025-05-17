@@ -3,13 +3,10 @@ package booking
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
-
+	"github.com/maksmelnyk/scheduling/internal/api"
+	"github.com/maksmelnyk/scheduling/internal/apperrors"
 	e "github.com/maksmelnyk/scheduling/internal/database/entities"
-	ec "github.com/maksmelnyk/scheduling/internal/errors"
-	hh "github.com/maksmelnyk/scheduling/internal/http"
 )
 
 type BookingHandler struct {
@@ -32,21 +29,21 @@ func NewBookingHandler(service *BookingService) *BookingHandler {
 // @Router       /api/v1/bookings/ [post]
 // @Security 	 BearerAuth
 func (h *BookingHandler) AddBooking(w http.ResponseWriter, r *http.Request) {
-	var booking *BookingRequest
-	err := json.NewDecoder(r.Body).Decode(&booking)
+	var request *BookingRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "Error parsing request body"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrJsonDecodingFailed))
 		return
 	}
 
-	if err := booking.Validate(); err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), err.Error()))
+	if err := request.Validate(); err != nil {
+		api.WriteError(w, err)
 		return
 	}
 
-	err = h.service.AddBooking(r.Context(), booking, r.Header.Get("Authorization"))
+	err = h.service.AddBooking(r.Context(), request, r.Header.Get("Authorization"))
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 	}
 	w.WriteHeader(http.StatusCreated)
 }
@@ -63,15 +60,15 @@ func (h *BookingHandler) AddBooking(w http.ResponseWriter, r *http.Request) {
 // @Router       /api/v1/bookings/{id}/confirm [post]
 // @Security 	 BearerAuth
 func (h *BookingHandler) ConfirmBooking(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := api.ParseLongParam(w, r, "id")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "invalid ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
 	err = h.service.UpdateBookingStatus(r.Context(), id, int(e.Approved))
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 	}
 	w.WriteHeader(http.StatusCreated)
 }
@@ -88,15 +85,15 @@ func (h *BookingHandler) ConfirmBooking(w http.ResponseWriter, r *http.Request) 
 // @Router       /api/v1/bookings/{id}/cancel [post]
 // @Security 	 BearerAuth
 func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := api.ParseLongParam(w, r, "id")
 	if err != nil {
-		hh.WriteError(w, hh.NewBadRequestError(ec.ErrInvalidInputParameters.Error(), "invalid ID"))
+		api.WriteError(w, apperrors.NewBadRequestError(err.Error(), apperrors.ErrParameterParsingFailed))
 		return
 	}
 
 	err = h.service.UpdateBookingStatus(r.Context(), id, int(e.Cancelled))
 	if err != nil {
-		hh.WriteError(w, hh.ParseError(err))
+		api.WriteError(w, err)
 	}
 	w.WriteHeader(http.StatusCreated)
 }
