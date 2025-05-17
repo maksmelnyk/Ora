@@ -8,8 +8,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.example.profile.exceptions.AuthenticationException;
-import com.example.profile.exceptions.ErrorCodes;
+import com.example.profile.exceptions.UnauthorizedException;
 
 import lombok.AllArgsConstructor;
 
@@ -24,7 +23,7 @@ public class CurrentUser {
         if (authentication != null && authentication.isAuthenticated()) {
             return UUID.fromString(authentication.getName());
         }
-        throw new AuthenticationException("User is not authenticated", ErrorCodes.USER_NOT_AUTHENTICATED);
+        throw new UnauthorizedException("User is not authenticated");
     }
 }
 

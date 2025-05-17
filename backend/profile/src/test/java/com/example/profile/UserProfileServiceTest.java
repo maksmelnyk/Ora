@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.profile.exceptions.ErrorCodes;
-import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.exceptions.NotFoundException;
 import com.example.profile.features.educatorProfile.EducatorProfileRepository;
 import com.example.profile.features.userProfile.UserProfileMapper;
 import com.example.profile.features.userProfile.UserProfileRepository;
@@ -79,11 +79,9 @@ public class UserProfileServiceTest {
 
         when(profileRepository.findById(userId)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> service.getUserProfileById(userId));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> service.getUserProfileById(userId));
 
-        assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getCode());
         verify(profileRepository, times(1)).findById(userId);
     }
 
@@ -133,11 +131,9 @@ public class UserProfileServiceTest {
         when(currentUser.getUserId()).thenReturn(userId);
         when(profileRepository.findById(userId)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class,
-                () -> service.updateUserProfile(request));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> service.updateUserProfile(request));
 
-        assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getCode());
         verify(profileRepository, times(1)).findById(userId);
         verify(profileRepository, never()).save(any());
     }

@@ -1,8 +1,15 @@
 package com.example.profile;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.profile.exceptions.ErrorCodes;
-import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.exceptions.NotFoundException;
 import com.example.profile.features.educatorProfile.EducatorProfileMapper;
 import com.example.profile.features.educatorProfile.EducatorProfileRepository;
 import com.example.profile.features.educatorProfile.EducatorProfileService;
@@ -22,9 +29,6 @@ import com.example.profile.features.userProfile.UserProfileRepository;
 import com.example.profile.features.userProfile.entities.UserProfile;
 import com.example.profile.infrastructure.identity.CurrentUser;
 import com.example.profile.infrastructure.messaging.publishers.EventPublisher;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 class EducatorProfileServiceTest {
@@ -73,10 +77,10 @@ class EducatorProfileServiceTest {
 
         when(educatorRepository.findById(educatorId)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+        NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> service.getEducatorProfileById(educatorId));
 
-        assertEquals(ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND, exception.getCode());
 
         verify(educatorRepository, times(1)).findById(educatorId);
     }
@@ -115,10 +119,10 @@ class EducatorProfileServiceTest {
         when(currentUser.getUserId()).thenReturn(userId);
         when(profileRepository.findById(userId)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+        NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> service.createMyEducatorProfile(request));
 
-        assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCodes.USER_PROFILE_NOT_FOUND, exception.getCode());
 
         verify(profileRepository, times(1)).findById(userId);
         verify(educatorRepository, never()).save(any(EducatorProfile.class));
@@ -157,10 +161,10 @@ class EducatorProfileServiceTest {
         when(currentUser.getUserId()).thenReturn(userId);
         when(educatorRepository.findById(userId)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+        NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> service.updateMyEducatorProfile(request));
 
-        assertEquals(ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND, exception.getCode());
 
         verify(educatorRepository, times(1)).findById(userId);
         verify(educatorRepository, never()).save(any(EducatorProfile.class));

@@ -5,7 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.example.profile.exceptions.ErrorCodes;
-import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.exceptions.NotFoundException;
 import com.example.profile.features.educatorProfile.EducatorProfileRepository;
 import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
@@ -31,22 +31,19 @@ public class UserProfileService {
         UUID userId = this.currentUser.getUserId();
         return this.repository.findById(userId)
                 .map(mapper::toProfileDetails)
-                .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + userId + "not found",
-                        ErrorCodes.USER_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
     }
 
     public ProfileDetailsResponse getUserProfileById(UUID id) {
         return this.repository.findById(id)
                 .map(mapper::toProfileDetails)
-                .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + id + "not found",
-                        ErrorCodes.USER_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
     }
 
     public void updateUserProfile(UpdateUserProfileRequest request) {
         UUID userId = this.currentUser.getUserId();
         var profile = this.repository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + userId + "not found",
-                        ErrorCodes.USER_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
 
         this.mapper.mapUserProfile(request, profile);
         this.repository.save(profile);

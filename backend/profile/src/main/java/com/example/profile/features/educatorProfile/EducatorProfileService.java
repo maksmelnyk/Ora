@@ -8,9 +8,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.profile.exceptions.ConflictException;
 import com.example.profile.exceptions.ErrorCodes;
-import com.example.profile.exceptions.InvalidRequestException;
-import com.example.profile.exceptions.ResourceNotFoundException;
+import com.example.profile.exceptions.NotFoundException;
 import com.example.profile.features.educatorProfile.contracts.EducatorDetailsResponse;
 import com.example.profile.features.educatorProfile.contracts.EducatorSummaryResponse;
 import com.example.profile.features.educatorProfile.contracts.PagedResult;
@@ -53,22 +53,18 @@ public class EducatorProfileService {
     public EducatorDetailsResponse getEducatorProfileById(UUID id) {
         return this.repository.findApprovedById(id)
                 .map(mapper::toEducatorDetails)
-                .orElseThrow(() -> new ResourceNotFoundException("Profile with id " + id + "not found",
-                        ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
     }
 
     @Transactional
     public void createMyEducatorProfile(UpdateEducatorProfileRequest request) {
         UUID userId = this.currentUser.getUserId();
         if (this.repository.existsById(userId)) {
-            throw new InvalidRequestException("Educator profile already exists",
-                    ErrorCodes.EDUCATOR_PROFILE_EXISTS);
+            throw new ConflictException("Educator profile already exists", ErrorCodes.EDUCATOR_PROFILE_EXISTS);
         }
 
         UserProfile profile = this.profileRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Profile with id " + userId + "not found",
-                        ErrorCodes.USER_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
 
         EducatorProfile educatorProfile = mapper.toEducatorProfile(request);
         educatorProfile.setUserProfile(profile);
@@ -88,9 +84,7 @@ public class EducatorProfileService {
     public void updateMyEducatorProfile(UpdateEducatorProfileRequest request) {
         UUID userId = this.currentUser.getUserId();
         EducatorProfile profile = this.repository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Profile with id " + userId + "not found",
-                        ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
 
         profile.setBio(request.bio());
         profile.setExperience(request.experience());
@@ -99,9 +93,7 @@ public class EducatorProfileService {
 
     public void setEducatorHasProduct(String userId) {
         EducatorProfile profile = this.repository.findById(UUID.fromString(userId))
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Profile with id " + userId + "not found",
-                        ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
 
         if (profile.isHasProduct()) {
             return;
