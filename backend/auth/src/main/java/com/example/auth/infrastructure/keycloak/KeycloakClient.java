@@ -1,51 +1,70 @@
 package com.example.auth.infrastructure.keycloak;
 
-import jakarta.ws.rs.core.Response;
-import lombok.AllArgsConstructor;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.example.auth.exceptions.AuthenticationException;
+import com.example.auth.exceptions.ConflictException;
 import com.example.auth.exceptions.ErrorCodes;
-import com.example.auth.exceptions.ValidationException;
+import com.example.auth.exceptions.NotFoundException;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class KeycloakClient {
-
     private final Keycloak keycloak;
     private final KeycloakProperties properties;
 
     public UUID registerUser(String username, String email, String password) {
         if (isEmailExists(email)) {
-            throw new ValidationException("Email already exists", ErrorCodes.EMAIL_ALREADY_EXISTS);
+            log.error("Email already exists: {}", email);
+            throw new ConflictException("Invalid registration details", ErrorCodes.INVALID_REGISTRATION_DETAILS);
         }
 
         if (isUsernameExists(username)) {
-            throw new ValidationException("Username already exists", ErrorCodes.USERNAME_ALREADY_EXISTS);
+            log.error("Username already exists: {}", username);
+            throw new ConflictException("Invalid registration details", ErrorCodes.INVALID_REGISTRATION_DETAILS);
         }
 
         UserRepresentation user = createUserRepresentation(username, email, password);
 
-        Response response = this.keycloak.realm(this.properties.getRealm()).users().create(user);
-        if (response.getStatus() != HttpStatus.CREATED.value()) {
-            throw new AuthenticationException("Failed to create user", ErrorCodes.USER_CREATION_FAILED);
+        try {
+            Response response = this.keycloak.realm(this.properties.getRealm()).users().create(user);
+            if (response.getStatus() == HttpStatus.CONFLICT.value()) {
+                throw new ConflictException("User already exists in Keycloak", ErrorCodes.USER_CREATION_FAILED);
+            } else if (response.getStatus() != HttpStatus.CREATED.value()) {
+                throw new RuntimeException("Unexpected response from Keycloak: " + response.getStatus());
+            }
+
+            String userId = extractUserIdFromResponse(response);
+            assignRoleToUser(userId, KeycloakRole.USER);
+
+            return UUID.fromString(userId);
+        } catch (WebApplicationException e) {
+            if (e.getResponse().getStatus() == 409) {
+                log.error("User already exists in Keycloak: {}", e.getMessage(), e);
+                throw new ConflictException("User already exists in Keycloak", ErrorCodes.USER_CREATION_FAILED);
+            }
+            log.error("Unexpected error during user registration", e);
+            throw e;
+
+        } catch (Exception e) {
+            log.error("Unexpected error during user registration", e);
+            throw e;
         }
-
-        String userId = extractUserIdFromResponse(response);
-
-        assignRoleToUser(userId, KeycloakRole.USER);
-
-        return UUID.fromString(userId);
     }
 
     public void enableUser(UUID userId) {
@@ -56,8 +75,12 @@ public class KeycloakClient {
             UserRepresentation user = userResource.toRepresentation();
             user.setEnabled(true);
             userResource.update(user);
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            log.error("User not found: {}", userId, e);
+            throw new NotFoundException("User not found", ErrorCodes.USER_NOT_FOUND);
         } catch (Exception e) {
-            throw new AuthenticationException("Failed to enable user", ErrorCodes.USER_UPDATE_FAILED, e);
+            log.error("Unexpected error during user registration", e);
+            throw e;
         }
     }
 
@@ -69,8 +92,11 @@ public class KeycloakClient {
             UserRepresentation user = userResource.toRepresentation();
 
             return user.isEnabled() ? UserStatus.ENABLED : UserStatus.DISABLED;
-        } catch (Exception e) {
+        } catch (jakarta.ws.rs.NotFoundException e) {
             return UserStatus.NOT_FOUND;
+        } catch (Exception e) {
+            log.error("Unexpected error during user registration", e);
+            throw e;
         }
     }
 
@@ -85,8 +111,12 @@ public class KeycloakClient {
                     .roles()
                     .realmLevel()
                     .add(Collections.singletonList(role));
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            log.error("User not found: {}", userId, e);
+            throw new NotFoundException("User not found", ErrorCodes.USER_NOT_FOUND);
         } catch (Exception e) {
-            throw new AuthenticationException("Failed to assign user role", ErrorCodes.USER_ROLE_ASSIGNMENT_FAILED, e);
+            log.error("Unexpected error during user registration", e);
+            throw e;
         }
     }
 

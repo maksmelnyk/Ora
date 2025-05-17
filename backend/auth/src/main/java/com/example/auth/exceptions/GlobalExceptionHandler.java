@@ -5,28 +5,32 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
-        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> handleConflictException(ConflictException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getCode(), HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException ex) {
-        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.UNAUTHORIZED);
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFoundException(NotFoundException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getCode(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(ResourceNotCreatedException.class)
-    public ResponseEntity<Map<String, String>> handleResourceNotCreatedException(ResourceNotCreatedException ex) {
-        return buildErrorResponse(ex.getMessage(), ex.getErrorCode(), HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorizedException(UnauthorizedException ex) {
+        return buildErrorResponse(ex.getMessage(), ex.getCode(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
+        log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
         return buildErrorResponse("An unexpected error occurred", "INTERNAL_SERVER_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }

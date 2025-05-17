@@ -1,19 +1,20 @@
 package com.example.auth.infrastructure.jwt;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import org.springframework.stereotype.Service;
-
-import com.example.auth.exceptions.AuthenticationException;
-import com.example.auth.exceptions.ErrorCodes;
-
-import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Service;
+
+import com.example.auth.exceptions.UnauthorizedException;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class JwtService {
     private static final SecretKey SECRET_KEY = Jwts.SIG.HS512.key().build();
@@ -42,15 +43,14 @@ public class JwtService {
 
             String type = claims.get("type", String.class);
             if (!"registration_status".equals(type)) {
-                throw new AuthenticationException("Invalid token type", ErrorCodes.AUTHORIZATION_FAILED);
+                throw new UnauthorizedException("Invalid token");
             }
 
             return UUID.fromString(claims.getSubject());
 
-        } catch (ExpiredJwtException e) {
-            throw new AuthenticationException("Token has expired", ErrorCodes.AUTHORIZATION_FAILED, e);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new AuthenticationException("Invalid token", ErrorCodes.AUTHORIZATION_FAILED, e);
+        } catch (Exception e) {
+            log.error("Failed to validate token: {}", e.getMessage());
+            throw new UnauthorizedException("Invalid token");
         }
     }
 }
