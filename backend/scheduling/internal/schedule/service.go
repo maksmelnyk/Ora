@@ -20,8 +20,8 @@ import (
 
 type ScheduleRepository interface {
 	GetWorkingPeriods(ctx context.Context, userId uuid.UUID, fromDate, toDate time.Time) ([]*entities.WorkingPeriod, error)
-	GetScheduledEvents(ctx context.Context, workingPeriodIds []int64) ([]*entities.ScheduledEvent, error)
-	GetBookings(ctx context.Context, workingPeriodIds []int64) ([]*entities.Booking, error)
+	GetWorkingPeriodBookings(ctx context.Context, workingPeriodIds []int64) ([]*entities.Booking, error)
+	GetWorkingPeriodScheduledEvents(ctx context.Context, workingPeriodIds []int64) ([]*entities.ScheduledEvent, error)
 	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*entities.WorkingPeriod, error)
 	GetScheduledEventById(ctx context.Context, userId uuid.UUID, id int64) (*entities.ScheduledEvent, error)
 	GetScheduledEventLessonIds(ctx context.Context, productId int64) ([]int64, error)
@@ -68,13 +68,13 @@ func (s *ScheduleService) GetScheduleByUserId(ctx context.Context, userId uuid.U
 		workingPeriodIds = append(workingPeriodIds, wp.Id)
 	}
 
-	scheduledEvents, err := s.repo.GetScheduledEvents(ctx, workingPeriodIds)
+	scheduledEvents, err := s.repo.GetWorkingPeriodScheduledEvents(ctx, workingPeriodIds)
 	if err != nil {
 		log.Error("failed to get scheduled events", err)
 		return nil, err
 	}
 
-	bookings, err := s.repo.GetBookings(ctx, workingPeriodIds)
+	bookings, err := s.repo.GetWorkingPeriodBookings(ctx, workingPeriodIds)
 	if err != nil {
 		log.Error("failed to get bookings", err)
 		return nil, err
@@ -177,6 +177,19 @@ func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, req
 		return err
 	}
 
+	workingPeriods, err := s.repo.GetWorkingPeriods(ctx, userId, request.StartTime, request.EndTime)
+	if err != nil {
+		log.Error("failed to get working periods", err)
+		return err
+	}
+
+	for _, wp := range workingPeriods {
+		if workingPeriod.Id != wp.Id && request.StartTime.Before(wp.EndTime) && request.EndTime.After(wp.StartTime) {
+			log.Error("working period overlaps with existing working period")
+			return apperrors.NewUnprocessedEntity("Working period overlaps with existing working period", apperrors.ErrWorkingPeriodHours)
+		}
+	}
+
 	hasEvent, err := s.repo.HasLinkedEvents(ctx, id)
 	if err != nil {
 		log.Error("failed to check if booking exists", err)
@@ -251,7 +264,7 @@ func (s *ScheduleService) AddScheduledEvent(
 		return apperrors.NewUnprocessedEntity("Scheduled event outside working hours", apperrors.ErrScheduledEventHours)
 	}
 
-	bookings, err := s.repo.GetBookings(ctx, []int64{workingPeriodId})
+	bookings, err := s.repo.GetWorkingPeriodBookings(ctx, []int64{workingPeriodId})
 	if err != nil {
 		return err
 	}
@@ -260,6 +273,19 @@ func (s *ScheduleService) AddScheduledEvent(
 		if request.StartTime.Before(booking.EndTime) && request.EndTime.After(booking.StartTime) {
 			log.Errorf("scheduled event overlaps with a booking")
 			return apperrors.NewUnprocessedEntity("Scheduled event overlaps with a booking", apperrors.ErrScheduledEventHours)
+		}
+	}
+
+	scheduledEvents, err := s.repo.GetWorkingPeriodScheduledEvents(ctx, []int64{workingPeriodId})
+	if err != nil {
+		log.Error("failed to get scheduled events", err)
+		return err
+	}
+
+	for _, event := range scheduledEvents {
+		if request.StartTime.Before(event.EndTime) && request.EndTime.After(event.StartTime) {
+			log.Errorf("scheduled event overlaps with an existing scheduled event")
+			return apperrors.NewUnprocessedEntity("Scheduled event overlaps with an existing scheduled event", apperrors.ErrScheduledEventHours)
 		}
 	}
 

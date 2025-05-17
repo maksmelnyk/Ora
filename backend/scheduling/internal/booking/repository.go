@@ -62,8 +62,18 @@ func (r *BookingRepo) GetBookingsByUserId(ctx context.Context, userId uuid.UUID,
 	return database.FetchMultiple[entities.Booking](ctx, r.db, query, args...)
 }
 
+// GetWorkingPeriodBookings retrieves bookings for a specific working period
+func (r *BookingRepo) GetWorkingPeriodBookings(ctx context.Context, workingPeriodId int64) ([]*entities.Booking, error) {
+	const query = `
+		SELECT id, educator_id, student_id, enrollment_id, product_id, scheduled_event_id, working_period_id, start_time, end_time, status, created_at, updated_at
+		FROM booking
+		WHERE working_period_id = $1
+	`
+	return database.FetchMultiple[entities.Booking](ctx, r.db, query, workingPeriodId)
+}
+
 // GetScheduledEvents retrieves scheduled events for a specific working period
-func (r *BookingRepo) GetScheduledEvents(ctx context.Context, workingPeriodId int64) ([]*entities.ScheduledEvent, error) {
+func (r *BookingRepo) GetWorkingPeriodScheduledEvents(ctx context.Context, workingPeriodId int64) ([]*entities.ScheduledEvent, error) {
 	const query = `
         SELECT id, user_id, product_id, lesson_id, title, working_period_id, start_time, end_time, max_participants, created_at, updated_at
         FROM scheduled_event

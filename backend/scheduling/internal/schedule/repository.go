@@ -31,7 +31,7 @@ func (r *ScheduleRepo) GetWorkingPeriods(ctx context.Context, userId uuid.UUID, 
 }
 
 // GetScheduledEvents retrieves scheduled events for working periods
-func (r *ScheduleRepo) GetScheduledEvents(ctx context.Context, workingPeriodIds []int64) ([]*entities.ScheduledEvent, error) {
+func (r *ScheduleRepo) GetWorkingPeriodScheduledEvents(ctx context.Context, workingPeriodIds []int64) ([]*entities.ScheduledEvent, error) {
 	const query = `
         SELECT id, user_id, product_id, lesson_id, title, working_period_id, start_time, end_time, max_participants, created_at, updated_at
         FROM scheduled_event
@@ -41,7 +41,7 @@ func (r *ScheduleRepo) GetScheduledEvents(ctx context.Context, workingPeriodIds 
 }
 
 // GetBookings retrieves bookings for working period
-func (r *ScheduleRepo) GetBookings(ctx context.Context, workingPeriodIds []int64) ([]*entities.Booking, error) {
+func (r *ScheduleRepo) GetWorkingPeriodBookings(ctx context.Context, workingPeriodIds []int64) ([]*entities.Booking, error) {
 	const query = `
         SELECT id, educator_id, student_id, enrollment_id, product_id, scheduled_event_id, working_period_id, start_time, end_time, status, created_at, updated_at
         FROM booking

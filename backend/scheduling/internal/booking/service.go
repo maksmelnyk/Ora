@@ -22,7 +22,8 @@ type BookingRepository interface {
 	GetEducatorBookingById(ctx context.Context, educatorId uuid.UUID, id int64) (*entities.Booking, error)
 	GetBookingsByUserId(ctx context.Context, userId uuid.UUID, upcomingAfter *time.Time, skip int, take int) ([]*entities.Booking, error)
 	GetWorkingPeriodById(ctx context.Context, userId uuid.UUID, id int64) (*entities.WorkingPeriod, error)
-	GetScheduledEvents(ctx context.Context, workingPeriodId int64) ([]*entities.ScheduledEvent, error)
+	GetWorkingPeriodBookings(ctx context.Context, workingPeriodId int64) ([]*entities.Booking, error)
+	GetWorkingPeriodScheduledEvents(ctx context.Context, workingPeriodId int64) ([]*entities.ScheduledEvent, error)
 	GetLessonsScheduledEvents(ctx context.Context, lessonIds []int64) ([]*entities.ScheduledEvent, error)
 	GetScheduledEventById(ctx context.Context, id int64) (*entities.ScheduledEvent, error)
 	HasBookingByEnrollmentId(ctx context.Context, enrollmentId int64) (bool, error)
@@ -113,19 +114,34 @@ func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest
 		return err
 	}
 
-	if !workingPeriod.StartTime.Before(request.StartTime) || !workingPeriod.EndTime.After(request.EndTime) {
-		log.Error("booking outside working hours")
-		return apperrors.NewUnprocessedEntity("Booking outside working hours", apperrors.ErrBookingHours)
+	if !((request.StartTime.Equal(workingPeriod.StartTime) || request.StartTime.After(workingPeriod.StartTime)) &&
+		(request.EndTime.Equal(workingPeriod.EndTime) || request.EndTime.Before(workingPeriod.EndTime))) {
+
+		log.Error("booking outside specified working period")
+		return apperrors.NewUnprocessedEntity("Booking outside specified working period", apperrors.ErrBookingHours)
 	}
 
-	scheduledEvents, err := s.repo.GetScheduledEvents(ctx, request.WorkingPeriodId)
+	bookings, err := s.repo.GetWorkingPeriodBookings(ctx, request.WorkingPeriodId)
+	if err != nil {
+		log.Error("Failed to retrieve bookings", err)
+		return err
+	}
+
+	for _, booking := range bookings {
+		if request.StartTime.Before(booking.EndTime) && request.EndTime.After(booking.StartTime) {
+			log.Errorf("Booking overlaps with existing booking: %d", booking.Id)
+			return apperrors.NewUnprocessedEntity("Booking overlaps with existing booking", apperrors.ErrBookingHours)
+		}
+	}
+
+	scheduledEvents, err := s.repo.GetWorkingPeriodScheduledEvents(ctx, request.WorkingPeriodId)
 	if err != nil {
 		log.Error("Failed to retrieve scheduled events", err)
 		return err
 	}
 
 	for _, event := range scheduledEvents {
-		if event.ProductId != *metadata.ProductId && request.StartTime.Before(event.EndTime) && request.EndTime.After(event.StartTime) {
+		if request.StartTime.Before(event.EndTime) && request.EndTime.After(event.StartTime) {
 			log.Errorf("Booking overlaps with scheduled event: %d", event.Id)
 			return apperrors.NewUnprocessedEntity("Booking overlaps with scheduled event", apperrors.ErrBookingHours)
 		}
