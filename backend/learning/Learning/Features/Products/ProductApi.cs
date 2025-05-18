@@ -1,4 +1,5 @@
 using Learning.Features.Products.Contracts;
+using Learning.Features.Products.Services;
 using Learning.Infrastructure.Keycloak;
 
 namespace Learning.Features.Products;
@@ -15,7 +16,7 @@ public static class ProductApi
             long? categoryId,
             long? subCategoryId,
             CancellationToken token,
-            IProductQueryService service,
+            IProductReadService service,
             int pageNumber = 1,
             int pageSize = 20) =>
         {
@@ -37,7 +38,7 @@ public static class ProductApi
 
         productGroup.MapGet("my", async (
             CancellationToken token,
-            IProductQueryService service,
+            IProductReadService service,
             int skip = 0,
             int take = 20) =>
         {
@@ -53,7 +54,7 @@ public static class ProductApi
         productGroup.MapGet("{productId:long}", async (
             long productId,
             CancellationToken token,
-            IProductQueryService service) =>
+            IProductReadService service) =>
         {
             var course = await service.GetProductDetailsAsync(productId, token);
             return course != null ? Results.Ok(course) : Results.NotFound();
@@ -69,7 +70,7 @@ public static class ProductApi
             long productId,
             ProductPurchaseMetadataRequest request,
             CancellationToken token,
-            IProductQueryService service) =>
+            IProductReadService service) =>
         {
             var result = await service.GetProductPurchaseMetadataAsync(productId, request, token);
             return Results.Ok(result);
@@ -84,7 +85,7 @@ public static class ProductApi
             long productId,
             ProductSchedulingMetadataRequest request,
             CancellationToken token,
-            IProductQueryService service) =>
+            IProductReadService service) =>
         {
             var result = await service.GetProductSchedulingMetadataAsync(productId, request, token);
             return Results.Ok(result);
@@ -98,7 +99,7 @@ public static class ProductApi
         productGroup.MapPost("", async (
             ProductCreateRequest request,
             CancellationToken token,
-            IProductManagementService service) =>
+            IProductWriteService service) =>
         {
             var result = await service.CreateProductAsync(request, token);
             return Results.Ok(result);
@@ -113,7 +114,7 @@ public static class ProductApi
             long productId,
             ProductUpdateRequest request,
             CancellationToken token,
-            IProductManagementService service) =>
+            IProductWriteService service) =>
         {
             await service.UpdateProductAsync(productId, request, token);
             return Results.NoContent();
@@ -127,7 +128,7 @@ public static class ProductApi
         productGroup.MapDelete("{productId:long}", async (
             long productId,
             CancellationToken token,
-            IProductManagementService service) =>
+            IProductWriteService service) =>
         {
             await service.DeleteProductAsync(productId, token);
             return Results.NoContent();
@@ -142,7 +143,7 @@ public static class ProductApi
             long productId,
             ModuleCreateRequest request,
             CancellationToken token,
-            IProductManagementService service) =>
+            IModuleService service) =>
         {
             var result = await service.CreateModuleAsync(productId, request, token);
             return Results.Ok(result);
@@ -158,7 +159,7 @@ public static class ProductApi
             long moduleId,
             ModuleUpdateRequest request,
             CancellationToken token,
-            IProductManagementService service) =>
+            IModuleService service) =>
         {
             await service.UpdateModuleAsync(productId, moduleId, request, token);
             return Results.NoContent();
@@ -173,7 +174,7 @@ public static class ProductApi
             long productId,
             long moduleId,
             CancellationToken token,
-            IProductManagementService service) =>
+            IModuleService service) =>
         {
             await service.DeleteModuleAsync(productId, moduleId, token);
             return Results.NoContent();
@@ -189,7 +190,7 @@ public static class ProductApi
             long moduleId,
             LessonCreateRequest request,
             CancellationToken token,
-            IProductManagementService service) =>
+            ILessonService service) =>
         {
             var result = await service.CreateLessonAsync(productId, moduleId, request, token);
             return Results.Ok(result);
@@ -206,7 +207,7 @@ public static class ProductApi
             long lessonId,
             LessonUpdateRequest request,
             CancellationToken token,
-            IProductManagementService service) =>
+            ILessonService service) =>
         {
             await service.UpdateLessonAsync(productId, moduleId, lessonId, request, token);
             return Results.Created();
@@ -222,7 +223,7 @@ public static class ProductApi
             long moduleId,
             long lessonId,
             CancellationToken token,
-            IProductManagementService service) =>
+            ILessonService service) =>
         {
             await service.DeleteLessonAsync(productId, moduleId, lessonId, token);
             return Results.NoContent();

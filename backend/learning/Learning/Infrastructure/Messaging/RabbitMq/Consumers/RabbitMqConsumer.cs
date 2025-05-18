@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Learning.Features.Enrollments;
-using Learning.Features.Products;
+using Learning.Features.Products.Services;
 using Learning.Features.Profiles;
 using Learning.Features.Profiles.Entities;
 using Learning.Infrastructure.Messaging.Events;
@@ -105,7 +105,7 @@ public class RabbitMqConsumer(ILogger<RabbitMqConsumer> logger, IServiceScopeFac
             var eventObj = JsonSerializer.Deserialize<EventScheduledEvent>(message, SerializerOptions)
                 ?? throw new JsonException($"Failed to deserialize {nameof(EventScheduledEvent)} for message {messageId}");
 
-            var productService = serviceProvider.GetRequiredService<IProductManagementService>();
+            var productService = serviceProvider.GetRequiredService<IProductWriteService>();
             await productService.SetProductScheduledAsync(eventObj.ProductId, eventObj.StartTime, eventObj.EndTime, token);
             return true;
         }

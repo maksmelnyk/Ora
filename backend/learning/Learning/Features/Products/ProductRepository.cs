@@ -1,4 +1,3 @@
-using Learning.Exceptions;
 using Learning.Features.Products.Entities;
 using Learning.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

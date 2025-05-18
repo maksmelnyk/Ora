@@ -6,9 +6,9 @@ using Learning.Features.Profiles;
 using Learning.Infrastructure.Identity;
 using Learning.Shared;
 
-namespace Learning.Features.Products;
+namespace Learning.Features.Products.Services;
 
-public interface IProductQueryService
+public interface IProductReadService
 {
     Task<PagedResult<ProductSummaryResponse>> GetProductsAsync(
         Guid? educatorId,
@@ -40,12 +40,12 @@ public interface IProductQueryService
     );
 }
 
-public sealed class ProductQueryService(
+public sealed class ProductReadService(
     ICurrentUser currentUser,
     IProductRepository productRepository,
     IEnrollmentRepository enrollmentRepository,
     IProfileService profileService
-    ) : IProductQueryService
+    ) : IProductReadService
 {
     public async Task<PagedResult<ProductSummaryResponse>> GetProductsAsync(
         Guid? educatorId,
