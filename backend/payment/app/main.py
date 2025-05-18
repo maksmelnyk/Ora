@@ -1,6 +1,7 @@
 from loguru import logger
 from sqlalchemy import text
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
@@ -74,8 +75,21 @@ app.openapi = lambda: custom_openapi(app=app)
 
 FastAPIInstrumentor.instrument_app(app=app)  # type: ignore
 
+app.add_middleware(
+    middleware_class=CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=settings.app.allow_origins,
+    allow_methods=settings.app.allow_methods,
+    allow_headers=settings.app.allow_headers,
+)
+
 app.add_middleware(middleware_class=RequestLoggingMiddleware)
-app.add_middleware(middleware_class=AuthMiddleware, validator=get_token_validator())
+
+app.add_middleware(
+    middleware_class=AuthMiddleware,
+    validator=get_token_validator(),
+    public_apis=["/docs", "/openapi.json"],
+)
 
 setup_exception_handlers(app)
 

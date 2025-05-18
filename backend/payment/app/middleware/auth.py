@@ -15,20 +15,16 @@ from app.infrastructure.jwks.validator import TokenValidator
 
 class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(
-        self,
-        app: ASGIApp,
-        validator: TokenValidator,
+        self, app: ASGIApp, validator: TokenValidator, public_apis: list[str]
     ) -> None:
         super().__init__(app=app)
         self.validator: TokenValidator = validator
+        self.public_apis: list[str] = public_apis
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-
-        # TODO: temporary allow OpenAPI docs APIs
-        public_apis: list[str] = ["/docs", "/openapi.json"]
-        if request.url.path in public_apis:
+        if request.url.path in self.public_apis:
             return await call_next(request)
 
         try:
