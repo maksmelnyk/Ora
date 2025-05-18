@@ -22,6 +22,10 @@ spring:
     publisher-returns: true
   
 app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS}
+    allowed-methods: ${ALLOWED_METHODS}
+    allowed-headers: ${ALLOWED_HEADERS}
   keycloak:
     url: "${KEYCLOAK_URL}"
     realm: "${KEYCLOAK_REALM}"
