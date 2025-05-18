@@ -39,6 +39,10 @@ spring:
     publisher-returns: true
 
 app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS}
+    allowed-methods: ${ALLOWED_METHODS}
+    allowed-headers: ${ALLOWED_HEADERS}
   rabbitmq:
     exchange: ${RABBITMQ_EXCHANGE:user-service-exchange}
     dlq-exchange: ${RABBITMQ_DLQ_EXCHANGE:dead-letter-exchange}
