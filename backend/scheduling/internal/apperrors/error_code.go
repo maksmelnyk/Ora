@@ -16,4 +16,5 @@ const (
 	ErrScheduledEventHasBooking = "ERROR_SCHEDULED_EVENT_HAS_BOOKING"
 	ErrWorkingPeriodHours       = "ERROR_WORKING_PERIOD_HOURS"
 	ErrWorkingPeriodHasEvent    = "ERROR_WORKING_PERIOD_HAS_EVENT"
+	ErrProductNotSchedulable    = "ERROR_PRODUCT_NOT_SCHEDULABLE"
 )

@@ -148,11 +148,9 @@ func (s *ScheduleService) AddWorkingPeriod(ctx context.Context, request *Working
 		return err
 	}
 
-	for _, wp := range workingPeriods {
-		if request.StartTime.Before(wp.EndTime) && request.EndTime.After(wp.StartTime) {
-			log.Error("working period overlaps with existing working period")
-			return apperrors.NewUnprocessedEntity("Working period overlaps with existing working period", apperrors.ErrWorkingPeriodHours)
-		}
+	if err := s.validateWorkingPeriodOverlap(workingPeriods, nil, request.StartTime, request.EndTime); err != nil {
+		log.Error("working period overlaps with existing working period", err)
+		return err
 	}
 
 	err = s.repo.AddWorkingPeriod(ctx, MapRequestToWorkingPeriod(userId, request))
@@ -184,22 +182,14 @@ func (s *ScheduleService) UpdateWorkingPeriod(ctx context.Context, id int64, req
 		return err
 	}
 
-	for _, wp := range workingPeriods {
-		if workingPeriod.Id != wp.Id && request.StartTime.Before(wp.EndTime) && request.EndTime.After(wp.StartTime) {
-			log.Error("working period overlaps with existing working period")
-			return apperrors.NewUnprocessedEntity("Working period overlaps with existing working period", apperrors.ErrWorkingPeriodHours)
-		}
-	}
-
-	hasEvent, err := s.repo.HasLinkedEvents(ctx, id)
-	if err != nil {
-		log.Error("failed to check if booking exists", err)
+	if err := s.validateWorkingPeriodOverlap(workingPeriods, &workingPeriod.Id, request.StartTime, request.EndTime); err != nil {
+		log.Error("working period overlaps with existing working period", err)
 		return err
 	}
 
-	if hasEvent {
-		log.Error("cannot update working period with linked events")
-		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvent)
+	if err := s.hasLinkedEvents(ctx, id); err != nil {
+		log.Error("failed to check if booking exists", err)
+		return err
 	}
 
 	MapRequestWithWorkingPeriod(request, workingPeriod)
@@ -221,15 +211,9 @@ func (s *ScheduleService) DeleteWorkingPeriod(ctx context.Context, id int64) err
 		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
-	hasEvent, err := s.repo.HasLinkedEvents(ctx, id)
-	if err != nil {
+	if err := s.hasLinkedEvents(ctx, id); err != nil {
 		log.Error("failed to check if booking exists", err)
 		return err
-	}
-
-	if hasEvent {
-		log.Error("cannot update working period with linked events")
-		return apperrors.NewConflict("Cannot update working period with linked events", apperrors.ErrWorkingPeriodHasEvent)
 	}
 
 	err = s.repo.DeleteWorkingPeriod(ctx, userId, id)
@@ -260,34 +244,14 @@ func (s *ScheduleService) AddScheduledEvent(
 		return err
 	}
 
-	if request.StartTime.Before(workingPeriod.StartTime) || request.EndTime.After(workingPeriod.EndTime) {
-		log.Error("scheduled event outside working hours")
-		return apperrors.NewUnprocessedEntity("Scheduled event outside working hours", apperrors.ErrScheduledEventHours)
-	}
-
-	bookings, err := s.repo.GetWorkingPeriodBookings(ctx, []int64{workingPeriodId})
-	if err != nil {
+	if err := s.validateScheduledEventTiming(request.StartTime, request.EndTime, workingPeriod.StartTime, workingPeriod.EndTime); err != nil {
+		log.Error("Scheduled event outside working hours", err)
 		return err
 	}
 
-	for _, booking := range bookings {
-		if request.StartTime.Before(booking.EndTime) && request.EndTime.After(booking.StartTime) {
-			log.Errorf("scheduled event overlaps with a booking")
-			return apperrors.NewUnprocessedEntity("Scheduled event overlaps with a booking", apperrors.ErrScheduledEventHours)
-		}
-	}
-
-	scheduledEvents, err := s.repo.GetWorkingPeriodScheduledEvents(ctx, []int64{workingPeriodId})
-	if err != nil {
-		log.Error("failed to get scheduled events", err)
+	if err := s.checkScheduledEventConflicts(ctx, workingPeriodId, request.StartTime, request.EndTime); err != nil {
+		log.Error("Invalid booking time", err)
 		return err
-	}
-
-	for _, event := range scheduledEvents {
-		if request.StartTime.Before(event.EndTime) && request.EndTime.After(event.StartTime) {
-			log.Errorf("scheduled event overlaps with an existing scheduled event")
-			return apperrors.NewUnprocessedEntity("Scheduled event overlaps with an existing scheduled event", apperrors.ErrScheduledEventHours)
-		}
 	}
 
 	durationMin := int(math.Round(request.EndTime.Sub(request.StartTime).Minutes()))
@@ -297,11 +261,12 @@ func (s *ScheduleService) AddScheduledEvent(
 	}
 
 	if pi.State == products.Invalid {
+		log.Error("Product is invalid: " + pi.ErrorMessage)
 		return errors.New(pi.ErrorMessage)
 	}
 
 	if pi.State == products.Unschedulable {
-		return errors.New("product is unschedulable")
+		return apperrors.NewUnprocessedEntity("Product is not schedulable", apperrors.ErrProductNotSchedulable)
 	}
 
 	err = s.repo.AddScheduledEvent(ctx, MapRequestToScheduledEvent(request, userId, workingPeriodId, pi.Title, pi.MaxParticipants))

@@ -2,9 +2,7 @@ package booking
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,27 +77,15 @@ func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest
 		return apperrors.NewUnauthorized("Unauthorized user", err)
 	}
 
-	hasBooking, err := s.repo.HasBookingByEnrollmentId(ctx, request.EnrollmentId)
-	if err != nil {
-		log.Error("Failed to check existing booking", err)
+	if err := s.ensureNoExistingBooking(ctx, request.EnrollmentId); err != nil {
+		log.Error("Booking already exists", err)
 		return err
 	}
 
-	if hasBooking {
-		log.Error("Booking already exists for this enrollment")
-		return apperrors.NewConflict("Booking already exists for this enrollment", apperrors.ErrBookingAlreadyExists)
-	}
-
-	durationMin := int(math.Round(request.EndTime.Sub(request.StartTime).Minutes()))
-	metadata, err := s.client.GetBookingMetadata(ctx, request.EnrollmentId, durationMin, authHeader)
+	metadata, err := s.getBookingMetadata(ctx, request, authHeader)
 	if err != nil {
 		log.Error("Failed to get booking metadata", err)
 		return err
-	}
-
-	if !metadata.IsValid {
-		log.Error(metadata.ErrorMessage)
-		return errors.New("invalid booking metadata")
 	}
 
 	educatorId, err := uuid.Parse(metadata.EducatorId)
@@ -108,43 +94,9 @@ func (s *BookingService) AddBooking(ctx context.Context, request *BookingRequest
 		return err
 	}
 
-	workingPeriod, err := s.repo.GetWorkingPeriodById(ctx, educatorId, request.WorkingPeriodId)
-	if err != nil {
-		log.Error("Failed to retrieve working period", err)
+	if err := s.validateBookingTiming(ctx, educatorId, request); err != nil {
+		log.Error("Invalid booking time", err)
 		return err
-	}
-
-	if !((request.StartTime.Equal(workingPeriod.StartTime) || request.StartTime.After(workingPeriod.StartTime)) &&
-		(request.EndTime.Equal(workingPeriod.EndTime) || request.EndTime.Before(workingPeriod.EndTime))) {
-
-		log.Error("booking outside specified working period")
-		return apperrors.NewUnprocessedEntity("Booking outside specified working period", apperrors.ErrBookingHours)
-	}
-
-	bookings, err := s.repo.GetWorkingPeriodBookings(ctx, request.WorkingPeriodId)
-	if err != nil {
-		log.Error("Failed to retrieve bookings", err)
-		return err
-	}
-
-	for _, booking := range bookings {
-		if request.StartTime.Before(booking.EndTime) && request.EndTime.After(booking.StartTime) {
-			log.Errorf("Booking overlaps with existing booking: %d", booking.Id)
-			return apperrors.NewUnprocessedEntity("Booking overlaps with existing booking", apperrors.ErrBookingHours)
-		}
-	}
-
-	scheduledEvents, err := s.repo.GetWorkingPeriodScheduledEvents(ctx, request.WorkingPeriodId)
-	if err != nil {
-		log.Error("Failed to retrieve scheduled events", err)
-		return err
-	}
-
-	for _, event := range scheduledEvents {
-		if request.StartTime.Before(event.EndTime) && request.EndTime.After(event.StartTime) {
-			log.Errorf("Booking overlaps with scheduled event: %d", event.Id)
-			return apperrors.NewUnprocessedEntity("Booking overlaps with scheduled event", apperrors.ErrBookingHours)
-		}
 	}
 
 	booking := MapRequestToBooking(request, userId, educatorId, *metadata.ProductId, metadata.Title)
