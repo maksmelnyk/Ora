@@ -21,7 +21,18 @@ using System.Security.Claims;
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
-builder.Services.AddCors();
+const string corsPolicy = "CorsPolicy";
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy(corsPolicy,
+        pb =>
+        {
+            pb.WithOrigins(builder.Configuration["ALLOWED_ORIGINS"]?.Split(","))
+              .WithMethods(builder.Configuration["ALLOWED_HEADERS"]?.Split(","))
+              .WithHeaders(builder.Configuration["ALLOWED_METHODS"]?.Split(","));
+        });
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi(o => { o.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
@@ -79,14 +90,14 @@ builder.Services.AddCategories();
 
 var app = builder.Build();
 
+app.UseCors(corsPolicy);
+app.UseHttpsRedirection();
+
 const string openApiUrl = "/openapi/v1/openapi.json";
-// TODO: temporary allow OpenAPI docs APIs
 app.MapOpenApi(openApiUrl).AllowAnonymous();
 app.UseSwaggerUI(o => { o.SwaggerEndpoint(openApiUrl, "v1"); });
 
-app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseCors();
 app.UseMiddleware<LoggingMiddleware>();
 app.UseSerilogRequestLogging();
 app.MapPrometheusScrapingEndpoint();

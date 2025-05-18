@@ -13,7 +13,7 @@ public interface IModuleService
 }
 
 public class ModuleService(
-    ProductRepository repo,
+    IProductRepository repo,
     ICurrentUser currentUser,
     IValidator<ModuleCreateRequest> moduleCreateRequestValidator,
     IValidator<ModuleUpdateRequest> moduleUpdateRequestValidator
