@@ -14,13 +14,9 @@ import (
 )
 
 // AuthMiddleware validates JWT tokens
-func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger) func(next http.Handler) http.Handler {
+func AuthMiddleware(validator *auth.JWTValidator, log *logger.AppLogger, publicRoutes []string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// TODO: temporary allow OpenAPI docs APIs
-			publicRoutes := []string{
-				"/swagger",
-			}
 			for _, route := range publicRoutes {
 				if strings.HasPrefix(r.URL.Path, route) {
 					next.ServeHTTP(w, r)

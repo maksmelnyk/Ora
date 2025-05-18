@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 
@@ -146,6 +147,15 @@ func main() {
 
 	// --- HTTP Router Setup ---
 	router := chi.NewRouter()
+
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   cfg.Server.AllowOrigin,
+		AllowedMethods:   cfg.Server.AllowMethods,
+		AllowedHeaders:   cfg.Server.AllowHeaders,
+		AllowCredentials: cfg.Server.AllowCredentials,
+	})
+
+	router.Use(corsMiddleware.Handler)
 	router.Use(chiMiddleware.CleanPath)
 	router.Use(chiMiddleware.Recoverer)
 	router.Use(otelhttp.NewMiddleware("HTTPServer",
@@ -153,7 +163,7 @@ func main() {
 		otelhttp.WithMeterProvider(otel.GetMeterProvider()),
 	))
 	router.Use(middleware.LoggingMiddleware(tel.Logger))
-	router.Use(middleware.AuthMiddleware(validator, tel.Logger))
+	router.Use(middleware.AuthMiddleware(validator, tel.Logger, []string{"/swagger"}))
 
 	// --- Mount Routes ---
 	router.Get("/swagger/*", httpSwagger.WrapHandler)

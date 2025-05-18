@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -16,8 +17,12 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string
-	Name string
+	Port             string
+	Name             string
+	AllowCredentials bool
+	AllowOrigin      []string
+	AllowHeaders     []string
+	AllowMethods     []string
 }
 
 type PostgresConfig struct {
@@ -112,8 +117,12 @@ func GetEnvWithDefault[T any](key string, defaultValue T) T {
 
 func LoadConfig() Config {
 	serverConfig := ServerConfig{
-		Port: GetEnvWithDefault("SCHEDULING_PORT", "8084"),
-		Name: GetEnvWithDefault("SCHEDULING_NAME", "scheduling-service"),
+		Port:             GetEnvWithDefault("SCHEDULING_PORT", "8084"),
+		Name:             GetEnvWithDefault("SCHEDULING_NAME", "scheduling-service"),
+		AllowCredentials: GetEnvWithDefault("ALLOWED_CREDENTIALS", true),
+		AllowOrigin:      strings.Split(GetEnvWithDefault("ALLOWED_ORIGINS", ""), ","),
+		AllowHeaders:     strings.Split(GetEnvWithDefault("ALLOWED_HEADERS", ""), ","),
+		AllowMethods:     strings.Split(GetEnvWithDefault("ALLOWED_METHODS", ""), ","),
 	}
 
 	postgresConfig := PostgresConfig{
