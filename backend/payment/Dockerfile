@@ -1,22 +1,23 @@
-FROM python:3-slim
+FROM python:3.13.1-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y \
+RUN apk update && apk add --no-cache \
     gcc \
     python3-dev \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    postgresql-dev
+
+RUN adduser --disabled-password --gecos "" --uid 1001 appuser
 
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt gunicorn uvicorn
 
-COPY . /app
+COPY . .
 
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+RUN chown -R appuser /app
 USER appuser
 
 CMD gunicorn --bind "0.0.0.0:${PAYMENT_PORT}" -k uvicorn.workers.UvicornWorker app.main:app

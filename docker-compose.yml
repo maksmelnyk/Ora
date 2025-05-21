@@ -21,7 +21,7 @@ services:
 
   pgadmin:
     container_name: pg_admin
-    image: dpage/pgadmin4:9.0.0
+    image: dpage/pgadmin4:9.3.0
     restart: unless-stopped
     environment:
       SCRIPT_NAME: ${PGADMIN_SCRIPT_NAME:-/pgadmin}
@@ -199,6 +199,7 @@ services:
       - keycloak
       - rabbitmq
       - pgadmin
+      - grafana
       - auth
       - profile
       - learning
@@ -283,6 +284,7 @@ services:
 
 networks:
   microservices-net:
+    name: microservices-net
     driver: bridge
 
 volumes:
