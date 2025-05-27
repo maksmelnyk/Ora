@@ -137,7 +137,7 @@ func LoadConfig() Config {
 	keycloakConfig := KeycloakConfig{
 		JwksURI:  GetEnvWithDefault("KEYCLOAK_JWKS_URI", ""),
 		Issuer:   GetEnvWithDefault("KEYCLOAK_ISSUER_URI", ""),
-		Audience: GetEnvWithDefault("SCHEDULING_KEYCLOAK_CLIENT_ID", ""),
+		Audience: GetEnvWithDefault("KEYCLOAK_AUDIENCE", ""),
 	}
 
 	logConfig := LogConfig{
