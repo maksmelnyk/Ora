@@ -28,8 +28,8 @@ builder.Services.AddCors(o =>
         pb =>
         {
             pb.WithOrigins(builder.Configuration["ALLOWED_ORIGINS"]?.Split(","))
-              .WithMethods(builder.Configuration["ALLOWED_HEADERS"]?.Split(","))
-              .WithHeaders(builder.Configuration["ALLOWED_METHODS"]?.Split(","));
+              .WithMethods(builder.Configuration["ALLOWED_METHODS"]?.Split(","))
+              .WithHeaders(builder.Configuration["ALLOWED_HEADERS"]?.Split(","));
         });
 });
 
@@ -96,6 +96,16 @@ app.UseHttpsRedirection();
 const string openApiUrl = "/openapi/v1/openapi.json";
 app.MapOpenApi(openApiUrl).AllowAnonymous();
 app.UseSwaggerUI(o => { o.SwaggerEndpoint(openApiUrl, "v1"); });
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == HttpMethods.Options)
+    {
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return;
+    }
+    await next();
+});
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<LoggingMiddleware>();
