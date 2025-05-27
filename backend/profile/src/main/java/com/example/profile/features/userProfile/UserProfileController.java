@@ -41,6 +41,6 @@ public class UserProfileController {
     @PutMapping("/me")
     public ResponseEntity<Void> updateUserProfile(@RequestBody @Valid UpdateUserProfileRequest request) {
         this.service.updateUserProfile(request);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.noContent().build();
     }
 }

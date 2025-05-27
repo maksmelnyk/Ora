@@ -47,13 +47,13 @@ public class EducatorProfileController {
     @PostMapping("/me")
     public ResponseEntity<Void> createMyEducatorProfile(@RequestBody @Valid UpdateEducatorProfileRequest request) {
         this.service.createMyEducatorProfile(request);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Update Educator Profile", description = "Update the educator profile of the currently authenticated user with the provided information.")
     @PutMapping("/me")
     public ResponseEntity<Void> updateMyEducatorProfile(@RequestBody @Valid UpdateEducatorProfileRequest request) {
         this.service.updateMyEducatorProfile(request);
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.noContent().build();
     }
 }
