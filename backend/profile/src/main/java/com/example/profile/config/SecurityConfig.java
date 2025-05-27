@@ -24,13 +24,15 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable) // TODO: temporary allow OpenAPI docs APIs
-                .authorizeHttpRequests(
-                        c -> c.requestMatchers("/public/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/educators").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/educators/*").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/profiles/*").permitAll()
-                                .anyRequest().authenticated())
+        http.csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(c -> c
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // TODO: temporary allow OpenAPI docs APIs
+                        .requestMatchers("/public/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/educators").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/educators/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/profiles/*").permitAll()
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(c -> c.jwt(Customizer.withDefaults()));
         return http.build();
     }
