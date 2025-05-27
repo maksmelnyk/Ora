@@ -29,8 +29,6 @@ app:
   keycloak:
     url: "${KEYCLOAK_URL}"
     realm: "${KEYCLOAK_REALM}"
-    clientId: "${KEYCLOAK_AUTH_CLIENT_ID}"
-    clientSecret: "${KEYCLOAK_AUTH_CLIENT_SECRET}"
     adminClientId: "${KEYCLOAK_ADMIN_CLIENT_ID}"
     adminUsername: "${KEYCLOAK_ADMIN_USER}"
     adminPassword: "${KEYCLOAK_ADMIN_PASSWORD}"
