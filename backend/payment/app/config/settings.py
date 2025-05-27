@@ -44,7 +44,7 @@ class DatabaseSettings:
 class KeycloakSettings:
     jwks_uri: str = get_env_var(name="KEYCLOAK_JWKS_URI", default="")
     issuer_uri: str = get_env_var(name="KEYCLOAK_ISSUER_URI", default="")
-    client_id: str = get_env_var(name="PAYMENT_KEYCLOAK_CLIENT_ID", default="")
+    audience: str = get_env_var(name="KEYCLOAK_AUDIENCE", default="")
 
 
 class LogSettings:

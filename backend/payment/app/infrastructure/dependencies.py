@@ -26,6 +26,6 @@ def get_token_validator(
 ) -> TokenValidator:
     return TokenValidator(
         jwks_provider=jwks_provider,
-        audience=settings.keycloak.client_id,
+        audience=settings.keycloak.audience,
         issuer=settings.keycloak.issuer_uri,
     )
