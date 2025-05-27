@@ -4,7 +4,9 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import com.example.profile.features.educatorProfile.entities.EducatorProfile;
 import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
+import com.example.profile.features.userProfile.contracts.ProfileEducatorDetailsResponse;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
 import com.example.profile.features.userProfile.entities.UserProfile;
 import com.example.profile.infrastructure.messaging.events.EducatorProfileUpdatedEvent;
@@ -25,14 +27,23 @@ public class UserProfileMapper {
                 .build();
     }
 
-    public ProfileDetailsResponse toProfileDetails(UserProfile profile) {
+    public ProfileDetailsResponse toProfileDetails(UserProfile profile, EducatorProfile educator) {
         return new ProfileDetailsResponse(
                 profile.getId(),
                 profile.getFirstName(),
                 profile.getLastName(),
                 profile.getBio(),
                 profile.getImageUrl(),
-                profile.getBirthDate());
+                profile.getBirthDate(),
+                toProfileEducatorDetails(educator));
+    }
+
+    public ProfileEducatorDetailsResponse toProfileEducatorDetails(EducatorProfile educator) {
+        if (educator == null) {
+            return null;
+        }
+
+        return new ProfileEducatorDetailsResponse(educator.getBio(), educator.getExperience());
     }
 
     public void mapUserProfile(UpdateUserProfileRequest source, UserProfile target) {

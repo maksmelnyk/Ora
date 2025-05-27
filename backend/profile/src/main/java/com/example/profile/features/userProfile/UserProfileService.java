@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import com.example.profile.exceptions.ErrorCodes;
 import com.example.profile.exceptions.NotFoundException;
 import com.example.profile.features.educatorProfile.EducatorProfileRepository;
+import com.example.profile.features.educatorProfile.entities.EducatorProfile;
 import com.example.profile.features.userProfile.contracts.ProfileDetailsResponse;
 import com.example.profile.features.userProfile.contracts.UpdateUserProfileRequest;
+import com.example.profile.features.userProfile.entities.UserProfile;
 import com.example.profile.infrastructure.identity.CurrentUser;
 import com.example.profile.infrastructure.messaging.events.RegistrationCompletedEvent;
 import com.example.profile.infrastructure.messaging.events.RegistrationInitiatedEvent;
@@ -29,15 +31,17 @@ public class UserProfileService {
 
     public ProfileDetailsResponse getMyUserProfile() {
         UUID userId = this.currentUser.getUserId();
-        return this.repository.findById(userId)
-                .map(mapper::toProfileDetails)
+        UserProfile user = this.repository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
+        EducatorProfile educator = this.educatorRepository.findById(userId).orElse(null);
+        return this.mapper.toProfileDetails(user, educator);
     }
 
     public ProfileDetailsResponse getUserProfileById(UUID id) {
-        return this.repository.findById(id)
-                .map(mapper::toProfileDetails)
+        UserProfile user = this.repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
+        EducatorProfile educator = this.educatorRepository.findById(id).orElse(null);
+        return this.mapper.toProfileDetails(user, educator);
     }
 
     public void updateUserProfile(UpdateUserProfileRequest request) {

@@ -9,5 +9,6 @@ public record ProfileDetailsResponse(
         String lastName,
         String bio,
         String imageUrl,
-        LocalDate birthDate) {
+        LocalDate birthDate,
+        ProfileEducatorDetailsResponse educator) {
 }
