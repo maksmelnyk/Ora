@@ -120,8 +120,10 @@ func main() {
 		}
 	}()
 	go func() {
-		if err := consumer.StartConsuming(ctx, messageHandler.HandleIncomingMessage); err != nil {
+		if err := consumer.StartConsuming(ctx, messageHandler.HandleIncomingMessage); err != nil && err != context.Canceled {
 			tel.Logger.Errorf("Consumer stopped with error: %v", err)
+		} else {
+			tel.Logger.Info("Consumer stopped gracefully.")
 		}
 	}()
 
@@ -140,8 +142,10 @@ func main() {
 		}
 	}()
 	go func() {
-		if err := dlqConsumer.StartConsuming(ctx); err != nil {
+		if err := dlqConsumer.StartConsuming(ctx); err != nil && err != context.Canceled {
 			tel.Logger.Errorf("DLQ consumer stopped with error: %v", err)
+		} else {
+			tel.Logger.Info("DLQ consumer stopped gracefully.")
 		}
 	}()
 
