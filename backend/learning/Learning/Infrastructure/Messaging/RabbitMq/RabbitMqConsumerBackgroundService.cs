@@ -17,6 +17,8 @@ public class RabbitMqConsumerBackgroundService(
     private readonly RabbitMqOptions _options = options.Value;
     private readonly List<IChannel> _channels = [];
     private readonly Dictionary<IChannel, string> _consumerTags = [];
+    private readonly SemaphoreSlim _disposeLock = new(1, 1);
+    private bool _disposed = false;
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
@@ -52,47 +54,13 @@ public class RabbitMqConsumerBackgroundService(
     public override async Task StopAsync(CancellationToken token)
     {
         logger.LogInformation("Stopping RabbitMQ consumers");
-
-        foreach (var channel in _channels)
-        {
-            try
-            {
-                if (_consumerTags.TryGetValue(channel, out var tag))
-                {
-                    await channel.BasicCancelAsync(tag, cancellationToken: token);
-                }
-
-                await channel.CloseAsync(token);
-                channel.Dispose();
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error closing RabbitMQ channel");
-            }
-        }
-
+        await DisposeChannelsAsync();
         await base.StopAsync(token);
     }
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var channel in _channels)
-        {
-            try
-            {
-                if (_consumerTags.TryGetValue(channel, out var tag))
-                {
-                    await channel.BasicCancelAsync(tag);
-                }
-
-                await channel.CloseAsync();
-                channel.Dispose();
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error during async disposal of RabbitMQ channel");
-            }
-        }
+        await DisposeChannelsAsync();
     }
 
 
@@ -226,6 +194,38 @@ public class RabbitMqConsumerBackgroundService(
                 await Task.Delay(delay, token);
                 delay = RetryDelayCalculator.Calculate(retries, _options.InitialRetryIntervalMs, _options.RetryMultiplier, _options.MaxRetryIntervalMs);
             }
+        }
+    }
+
+    private async Task DisposeChannelsAsync()
+    {
+        await _disposeLock.WaitAsync();
+        try
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            foreach (var channel in _channels)
+            {
+                try
+                {
+                    if (_consumerTags.TryGetValue(channel, out var tag))
+                    {
+                        await channel.BasicCancelAsync(tag);
+                    }
+
+                    await channel.CloseAsync();
+                    channel.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error during RabbitMQ channel disposal");
+                }
+            }
+        }
+        finally
+        {
+            _disposeLock.Release();
         }
     }
 }
