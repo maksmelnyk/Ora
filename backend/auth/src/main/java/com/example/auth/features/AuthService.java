@@ -30,7 +30,7 @@ public class AuthService {
 
         eventPublisher.publishRegistrationInitiated(new RegistrationInitiatedEvent(
                 userId.toString(),
-                request.email(),
+                request.username(),
                 request.firstName(),
                 request.lastName(),
                 request.birthDate()));
