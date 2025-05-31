@@ -88,6 +88,8 @@ public class EducatorProfileService {
 
         profile.setBio(request.bio());
         profile.setExperience(request.experience());
+        profile.setVideoUrl(request.videoUrl());
+
         this.repository.save(profile);
     }
 

@@ -47,6 +47,9 @@ public class EducatorProfile {
     @Size(max = 1024)
     private String experience;
 
+    @Column(length = 200, nullable = true)
+    private String videoUrl;
+
     @Column(nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private EducatorVerificationStatus status;

@@ -91,7 +91,10 @@ class EducatorProfileServiceTest {
 
         UserProfile profile = UserProfile.builder().id(userId).build();
 
-        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest("test-bio", "test-experience");
+        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest(
+                "test-bio",
+                "test-experience",
+                "test-video-url");
 
         EducatorProfile educatorProfile = EducatorProfile.builder()
                 .bio(request.bio())
@@ -114,7 +117,10 @@ class EducatorProfileServiceTest {
     void createEducatorProfile_ShouldThrowException_WhenUserProfileDoesNotExist() {
         UUID userId = UUID.randomUUID();
 
-        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest("test-bio", "test-experience");
+        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest(
+                "test-bio",
+                "test-experience",
+                "test-video-url");
 
         when(currentUser.getUserId()).thenReturn(userId);
         when(profileRepository.findById(userId)).thenReturn(Optional.empty());
@@ -137,7 +143,10 @@ class EducatorProfileServiceTest {
                 .experience("old-test-experience")
                 .build();
 
-        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest("test-bio", "test-experience");
+        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest(
+                "test-bio",
+                "test-experience",
+                "test-video-url");
 
         when(currentUser.getUserId()).thenReturn(userId);
         when(educatorRepository.findById(userId)).thenReturn(Optional.of(profile));
@@ -156,7 +165,10 @@ class EducatorProfileServiceTest {
     void updateEducatorProfile_ShouldThrowException_WhenProfileDoesNotExist() {
         UUID userId = UUID.randomUUID();
 
-        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest("test-bio", "test-experience");
+        UpdateEducatorProfileRequest request = new UpdateEducatorProfileRequest(
+                "test-bio",
+                "test-experience",
+                "test-video-url");
 
         when(currentUser.getUserId()).thenReturn(userId);
         when(educatorRepository.findById(userId)).thenReturn(Optional.empty());

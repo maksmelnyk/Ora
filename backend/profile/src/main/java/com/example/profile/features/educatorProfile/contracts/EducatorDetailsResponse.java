@@ -7,6 +7,7 @@ public record EducatorDetailsResponse(
         String firstName,
         String lastName,
         String imageUrl,
+        String videoUrl,
         String bio,
         String experience) {
 }

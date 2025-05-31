@@ -17,6 +17,7 @@ public class EducatorProfileMapper {
         return EducatorProfile.builder()
                 .bio(request.bio())
                 .experience(request.experience())
+                .videoUrl(request.videoUrl())
                 .hasProduct(false)
                 .build();
     }
@@ -36,6 +37,7 @@ public class EducatorProfileMapper {
                 profile.getUserProfile().getFirstName(),
                 profile.getUserProfile().getLastName(),
                 profile.getUserProfile().getImageUrl(),
+                profile.getVideoUrl(),
                 profile.getBio(),
                 profile.getExperience());
     }

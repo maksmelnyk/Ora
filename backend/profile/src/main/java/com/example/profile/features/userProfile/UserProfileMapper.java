@@ -44,7 +44,7 @@ public class UserProfileMapper {
             return null;
         }
 
-        return new ProfileEducatorDetailsResponse(educator.getBio(), educator.getExperience());
+        return new ProfileEducatorDetailsResponse(educator.getBio(), educator.getExperience(), educator.getVideoUrl());
     }
 
     public void mapUserProfile(UpdateUserProfileRequest source, UserProfile target) {
