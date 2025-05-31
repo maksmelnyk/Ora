@@ -31,6 +31,10 @@ public class UserProfile {
 
     @Column(nullable = false, length = 50)
     @Size(max = 50)
+    private String username;
+
+    @Column(nullable = false, length = 50)
+    @Size(max = 50)
     private String firstName;
 
     @Column(nullable = false, length = 50)
@@ -40,7 +44,7 @@ public class UserProfile {
     @Column(length = 200, nullable = true)
     private String imageUrl;
 
-    @Column(length = 2000, nullable = true)
+    @Column(length = 200, nullable = true)
     private String bio;
 
     @Column(nullable = false)

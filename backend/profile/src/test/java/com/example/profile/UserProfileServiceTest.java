@@ -68,7 +68,6 @@ public class UserProfileServiceTest {
         assertEquals(profile.getId(), result.id());
         assertEquals(profile.getFirstName(), result.firstName());
         assertEquals(profile.getLastName(), result.lastName());
-        assertEquals(profile.getBirthDate(), result.birthDate());
 
         verify(profileRepository, times(1)).findById(userId);
     }
@@ -99,7 +98,6 @@ public class UserProfileServiceTest {
         UpdateUserProfileRequest request = new UpdateUserProfileRequest(
                 "new-first-name",
                 "new-last-name",
-                LocalDate.of(2000, 1, 1),
                 "test-bio",
                 "test-url");
 
@@ -110,8 +108,6 @@ public class UserProfileServiceTest {
 
         assertEquals(request.firstName(), profile.getFirstName());
         assertEquals(request.lastName(), profile.getLastName());
-        assertEquals(request.birthDate(), profile.getBirthDate());
-        assertEquals(request.bio(), profile.getBio());
 
         verify(profileRepository, times(1)).findById(userId);
         verify(profileRepository, times(1)).save(profile);
@@ -124,7 +120,6 @@ public class UserProfileServiceTest {
         UpdateUserProfileRequest request = new UpdateUserProfileRequest(
                 "new-first-name",
                 "new-last-name",
-                LocalDate.of(2000, 1, 1),
                 "test-bio",
                 "test-url");
 

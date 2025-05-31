@@ -21,6 +21,7 @@ public class UserProfileMapper {
 
         return UserProfile.builder()
                 .id(UUID.fromString(request.getUserId()))
+                .username(request.getUsername())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .birthDate(request.getBirthDate())
@@ -30,11 +31,11 @@ public class UserProfileMapper {
     public ProfileDetailsResponse toProfileDetails(UserProfile profile, EducatorProfile educator) {
         return new ProfileDetailsResponse(
                 profile.getId(),
+                profile.getUsername(),
                 profile.getFirstName(),
                 profile.getLastName(),
                 profile.getBio(),
                 profile.getImageUrl(),
-                profile.getBirthDate(),
                 toProfileEducatorDetails(educator));
     }
 
@@ -54,8 +55,6 @@ public class UserProfileMapper {
         target.setFirstName(source.firstName());
         target.setLastName(source.lastName());
         target.setImageUrl(source.imageUrl());
-        target.setBio(source.bio());
-        target.setBirthDate(source.birthDate());
     }
 
     public EducatorProfileUpdatedEvent toProfileUpdatedEvent(UserProfile request) {
