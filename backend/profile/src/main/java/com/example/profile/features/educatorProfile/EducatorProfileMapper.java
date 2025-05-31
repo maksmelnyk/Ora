@@ -1,5 +1,7 @@
 package com.example.profile.features.educatorProfile;
 
+import java.util.Random;
+
 import org.springframework.stereotype.Component;
 
 import com.example.profile.features.educatorProfile.contracts.EducatorDetailsResponse;
@@ -22,16 +24,21 @@ public class EducatorProfileMapper {
                 .build();
     }
 
-    public EducatorSummaryResponse toEducatorSummary(EducatorProfile profile) {
+    // TODO: map real counters
+    public EducatorSummaryResponse toEducatorSummary(EducatorProfile profile, Random random) {
         return new EducatorSummaryResponse(
                 profile.getId(),
                 profile.getUserProfile().getFirstName(),
                 profile.getUserProfile().getLastName(),
                 profile.getUserProfile().getImageUrl(),
-                profile.getBio());
+                profile.getBio(),
+                Math.round(1.0 + (5.0 - 1.0) * random.nextDouble() * 10.0) / 10.0,
+                random.nextInt(0, 20),
+                random.nextInt(0, 20));
     }
 
-    public EducatorDetailsResponse toEducatorDetails(EducatorProfile profile) {
+    // TODO: map real counters
+    public EducatorDetailsResponse toEducatorDetails(EducatorProfile profile, Random random) {
         return new EducatorDetailsResponse(
                 profile.getId(),
                 profile.getUserProfile().getFirstName(),
@@ -39,6 +46,9 @@ public class EducatorProfileMapper {
                 profile.getUserProfile().getImageUrl(),
                 profile.getVideoUrl(),
                 profile.getBio(),
-                profile.getExperience());
+                profile.getExperience(),
+                Math.round(1.0 + (5.0 - 1.0) * random.nextDouble() * 10.0) / 10.0,
+                random.nextInt(0, 20),
+                random.nextInt(0, 20));
     }
 }

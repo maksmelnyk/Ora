@@ -1,5 +1,6 @@
 package com.example.profile.features.userProfile;
 
+import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -29,19 +30,23 @@ public class UserProfileService {
     private final UserProfileRepository repository;
     private final EducatorProfileRepository educatorRepository;
 
+    private static final Random random = new Random();
+
+    // TODO: replace random with real data
     public ProfileDetailsResponse getMyUserProfile() {
         UUID userId = this.currentUser.getUserId();
         UserProfile user = this.repository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
         EducatorProfile educator = this.educatorRepository.findById(userId).orElse(null);
-        return this.mapper.toProfileDetails(user, educator);
+        return this.mapper.toProfileDetails(user, educator, random);
     }
 
+    // TODO: replace random with real data
     public ProfileDetailsResponse getUserProfileById(UUID id) {
         UserProfile user = this.repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.USER_PROFILE_NOT_FOUND));
         EducatorProfile educator = this.educatorRepository.findById(id).orElse(null);
-        return this.mapper.toProfileDetails(user, educator);
+        return this.mapper.toProfileDetails(user, educator, random);
     }
 
     public void updateUserProfile(UpdateUserProfileRequest request) {

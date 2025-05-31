@@ -1,5 +1,6 @@
 package com.example.profile.features.educatorProfile;
 
+import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -35,6 +36,8 @@ public class EducatorProfileService {
     private final EducatorProfileRepository repository;
     private final UserProfileRepository profileRepository;
 
+    private static final Random random = new Random();
+
     public PagedResult<EducatorSummaryResponse> getEducatorProfiles(int pageNumber, int pageSize) {
         PageRequest pageable = PageRequest.of(pageNumber - 1, pageSize,
                 Sort.by(Sort.Order.desc("hasProduct"), Sort.Order.desc("createdDate")));
@@ -42,17 +45,19 @@ public class EducatorProfileService {
         Page<EducatorProfile> educatorProfiles = this.repository.findByStatus(
                 EducatorVerificationStatus.APPROVED, pageable);
 
+        // TODO: replace random with real data
         return new PagedResult<EducatorSummaryResponse>(
-                educatorProfiles.getContent().stream().map(mapper::toEducatorSummary).toList(),
+                educatorProfiles.getContent().stream().map(m -> mapper.toEducatorSummary(m, random)).toList(),
                 educatorProfiles.getTotalPages(),
                 educatorProfiles.getTotalElements(),
                 pageNumber,
                 educatorProfiles.getSize());
     }
 
+    // TODO: replace random with real data
     public EducatorDetailsResponse getEducatorProfileById(UUID id) {
         return this.repository.findApprovedById(id)
-                .map(mapper::toEducatorDetails)
+                .map(m -> mapper.toEducatorDetails(m, random))
                 .orElseThrow(() -> new NotFoundException("Profile not found", ErrorCodes.EDUCATOR_PROFILE_NOT_FOUND));
     }
 

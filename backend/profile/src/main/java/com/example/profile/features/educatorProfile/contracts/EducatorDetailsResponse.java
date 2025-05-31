@@ -9,5 +9,8 @@ public record EducatorDetailsResponse(
         String imageUrl,
         String videoUrl,
         String bio,
-        String experience) {
+        String experience,
+        double rating,
+        int studentCount,
+        int productCount) {
 }

@@ -1,5 +1,6 @@
 package com.example.profile.features.userProfile;
 
+import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -28,7 +29,7 @@ public class UserProfileMapper {
                 .build();
     }
 
-    public ProfileDetailsResponse toProfileDetails(UserProfile profile, EducatorProfile educator) {
+    public ProfileDetailsResponse toProfileDetails(UserProfile profile, EducatorProfile educator, Random random) {
         return new ProfileDetailsResponse(
                 profile.getId(),
                 profile.getUsername(),
@@ -36,15 +37,22 @@ public class UserProfileMapper {
                 profile.getLastName(),
                 profile.getBio(),
                 profile.getImageUrl(),
-                toProfileEducatorDetails(educator));
+                toProfileEducatorDetails(educator, random));
     }
 
-    public ProfileEducatorDetailsResponse toProfileEducatorDetails(EducatorProfile educator) {
+    // TODO: map real counters
+    public ProfileEducatorDetailsResponse toProfileEducatorDetails(EducatorProfile educator, Random random) {
         if (educator == null) {
             return null;
         }
 
-        return new ProfileEducatorDetailsResponse(educator.getBio(), educator.getExperience(), educator.getVideoUrl());
+        return new ProfileEducatorDetailsResponse(
+                educator.getBio(),
+                educator.getExperience(),
+                educator.getVideoUrl(),
+                Math.round(1.0 + (5.0 - 1.0) * random.nextDouble() * 10.0) / 10.0,
+                random.nextInt(0, 20),
+                random.nextInt(0, 20));
     }
 
     public void mapUserProfile(UpdateUserProfileRequest source, UserProfile target) {
