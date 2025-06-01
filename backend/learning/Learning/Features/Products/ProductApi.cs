@@ -34,7 +34,7 @@ public static class ProductApi
         .WithName("GetProductsAsync")
         .WithSummary("Retrieve Products")
         .WithDescription("Retrieves a list of products filtered by optional educator, category, or sub-category parameters, with pagination support using pageNumber and pageSize.")
-        .Produces<IEnumerable<ProductSummaryResponse>>(StatusCodes.Status200OK)
+        .Produces<PagedResult<ProductSummaryResponse>>(StatusCodes.Status200OK)
         .AllowAnonymous();
 
         productGroup.MapGet("educator/{educatorId:guid}", async (
@@ -56,18 +56,18 @@ public static class ProductApi
 
         productGroup.MapGet("my", async (
             CancellationToken token,
+            string cursor,
             IProductReadService service,
-            int skip = 0,
-            int take = 20) =>
+            int pageSize = 20) =>
         {
-            var courses = await service.GetEnrolledProductsAsync(skip, take, token);
+            var courses = await service.GetEnrolledProductsAsync(cursor, pageSize, token);
             return Results.Ok(courses);
         })
         .WithName("GetEnrolledProductsAsync")
         .WithSummary("Retrieve Enrolled Products")
         .WithDescription("Retrieves the list of products that the authenticated user is enrolled in using skip and take as pagination parameters.")
         .RequireAuthorization()
-        .Produces<IEnumerable<ProductSummaryResponse>>(StatusCodes.Status200OK);
+        .Produces<CursorPagedResult<ProductSummaryResponse>>(StatusCodes.Status200OK);
 
         productGroup.MapGet("{productId:long}", async (
             long productId,

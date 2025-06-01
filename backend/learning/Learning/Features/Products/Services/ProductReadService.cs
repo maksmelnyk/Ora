@@ -26,9 +26,9 @@ public interface IProductReadService
         CancellationToken token
     );
 
-    Task<IEnumerable<ProductSummaryResponse>> GetEnrolledProductsAsync(
-        int skip,
-        int take,
+    Task<CursorPagedResult<ProductSummaryResponse>> GetEnrolledProductsAsync(
+        string cursor,
+        int pageSize,
         CancellationToken token
     );
 
@@ -118,13 +118,19 @@ public sealed class ProductReadService(
         return new CursorPagedResult<ProductSummaryResponse>(result, result.Last().Id.ToString(), pageSize);
     }
 
-    public async Task<IEnumerable<ProductSummaryResponse>> GetEnrolledProductsAsync(int skip, int take, CancellationToken token)
+    public async Task<CursorPagedResult<ProductSummaryResponse>> GetEnrolledProductsAsync(
+        string cursor,
+        int pageSize,
+        CancellationToken token
+    )
     {
         var userId = currentUser.GetUserId();
 
-        var products = await productRepository.GetEnrolledProductsAsync(userId, skip, take, token);
+        var parsedCursor = cursor != null ? long.Parse(cursor) : (long?)null;
+
+        var products = await productRepository.GetEnrolledProductsAsync(userId, parsedCursor, pageSize, token);
         if (products.Length == 0)
-            return [];
+            return new CursorPagedResult<ProductSummaryResponse>();
 
         var profiles = await profileService.GetEducatorsAsync(products.Select(e => e.EducatorId).Distinct(), token);
 
@@ -134,9 +140,9 @@ public sealed class ProductReadService(
 
             //TODO: replace random with real data
             return ProductMapper.ToProductSummary(e, educator, random);
-        });
+        }).ToArray();
 
-        return result;
+        return new CursorPagedResult<ProductSummaryResponse>(result, result.Last().Id.ToString(), pageSize);
     }
 
     public async Task<ProductDetailsResponse> GetProductDetailsAsync(long id, CancellationToken token)

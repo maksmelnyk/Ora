@@ -22,7 +22,7 @@ public interface IProductRepository
         int take,
         CancellationToken token
     );
-    Task<Product[]> GetEnrolledProductsAsync(Guid userId, int skip, int take, CancellationToken token);
+    Task<Product[]> GetEnrolledProductsAsync(Guid userId, long? id, int take, CancellationToken token);
     Task<Product> GetProductByIdAsync(long id, bool withModules, CancellationToken token);
     Task<long[]> GetProductLessonIds(long id, CancellationToken token);
     Task<bool> ProductExistsAsync(long id, Guid educatorId, CancellationToken token);
@@ -76,18 +76,19 @@ public class ProductRepository(AppDbContext db) : IProductRepository
     {
         var products = activeOnly is true ? GetActiveProducts() : GetNonDeletedProducts();
 
-        return products.Where(e => e.EducatorId == educatorId && e.Id != id)
+        return products.Where(e => e.EducatorId == educatorId)
+            .Where(e => id == null || e.Id > id)
             .OrderBy(e => e.Id)
             .Take(take)
             .ToArrayAsync(token);
     }
 
-    public Task<Product[]> GetEnrolledProductsAsync(Guid userId, int skip, int take, CancellationToken token)
+    public Task<Product[]> GetEnrolledProductsAsync(Guid userId, long? id, int take, CancellationToken token)
     {
-        return db.Enrollments.Where(e => e.UserId == userId).OrderBy(e => e.CreatedAt)
-            .Join(db.Products.Where(e => e.DeletedAt == null), e => e.ProductId, e => e.Id, (e, p) => p)
-            .Select(e => e)
-            .Skip(skip)
+        return db.Products.Where(e => e.DeletedAt == null)
+            .Where(e => db.Enrollments.Any(i => i.ProductId == e.Id && i.UserId == userId))
+            .Where(e => id == null || e.Id > id)
+            .OrderBy(e => e.Id)
             .Take(take)
             .ToArrayAsync(token);
     }
