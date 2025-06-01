@@ -67,11 +67,9 @@ public sealed class ProductReadService(
     {
         var userId = currentUser.GetUserIdOrNull();
 
-        ProductStatus? status = userId != null && educatorId == userId ? null : ProductStatus.Active;
-
         var (Items, TotalItems) = await productRepository.GetProductsAsync(
+            userId == null || userId != educatorId,
             educatorId,
-            status,
             categoryId,
             subCategoryId,
             (pageNumber - 1) * pageSize,
@@ -101,11 +99,10 @@ public sealed class ProductReadService(
     )
     {
         var userId = currentUser.GetUserIdOrNull();
-        ProductStatus? status = userId != null && educatorId == userId ? null : ProductStatus.Active;
 
         var products = await productRepository.GetEducatorProductsAsync(
+            userId == null || userId != educatorId,
             educatorId,
-            status,
             cursor != null ? long.Parse(cursor) : null,
             pageSize,
             token

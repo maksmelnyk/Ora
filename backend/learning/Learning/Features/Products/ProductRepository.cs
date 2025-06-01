@@ -7,8 +7,8 @@ namespace Learning.Features.Products;
 public interface IProductRepository
 {
     Task<(Product[] Items, int TotalItems)> GetProductsAsync(
+        bool activeOnly,
         Guid? educatorId,
-        ProductStatus? status,
         long? categoryId,
         long? subCategoryId,
         int skip,
@@ -16,8 +16,8 @@ public interface IProductRepository
         CancellationToken token
     );
     Task<Product[]> GetEducatorProductsAsync(
+        bool activeOnly,
         Guid educatorId,
-        ProductStatus? status,
         long? id,
         int take,
         CancellationToken token
@@ -40,8 +40,8 @@ public interface IProductRepository
 public class ProductRepository(AppDbContext db) : IProductRepository
 {
     public async Task<(Product[] Items, int TotalItems)> GetProductsAsync(
+        bool activeOnly,
         Guid? educatorId,
-        ProductStatus? status,
         long? categoryId,
         long? subCategoryId,
         int skip,
@@ -49,17 +49,10 @@ public class ProductRepository(AppDbContext db) : IProductRepository
         CancellationToken token
     )
     {
-        var products = GetNonDeletedProducts().Where(
-            e => e.Type == ProductType.PrivateSession ||
-                e.Type == ProductType.PreRecordedCourse ||
-                (e.LastScheduledAt != null && e.LastScheduledAt > DateTime.UtcNow)
-        );
+        var products = activeOnly is true ? GetActiveProducts() : GetNonDeletedProducts();
 
         if (educatorId.HasValue)
             products = products.Where(e => e.EducatorId == educatorId.Value);
-
-        if (status.HasValue)
-            products = products.Where(e => e.Status == status.Value);
 
         if (categoryId.HasValue)
             products = products.Where(e => e.SubCategory.CategoryId == categoryId.Value);
@@ -74,22 +67,19 @@ public class ProductRepository(AppDbContext db) : IProductRepository
     }
 
     public Task<Product[]> GetEducatorProductsAsync(
+        bool activeOnly,
         Guid educatorId,
-        ProductStatus? status,
         long? id,
         int take,
         CancellationToken token
     )
     {
-        var products = GetNonDeletedProducts().Where(e => e.EducatorId == educatorId).Where(e => id == null || e.Id > id);
+        var products = activeOnly is true ? GetActiveProducts() : GetNonDeletedProducts();
 
-        products = status != null ? products.Where(e => e.Status == status) : products.Where(
-            e => e.Type == ProductType.PrivateSession ||
-                e.Type == ProductType.PreRecordedCourse ||
-                (e.LastScheduledAt != null && e.LastScheduledAt > DateTime.UtcNow)
-        );
-
-        return products.OrderBy(e => e.Id).Take(take).ToArrayAsync(token);
+        return products.Where(e => e.EducatorId == educatorId && e.Id != id)
+            .OrderBy(e => e.Id)
+            .Take(take)
+            .ToArrayAsync(token);
     }
 
     public Task<Product[]> GetEnrolledProductsAsync(Guid userId, int skip, int take, CancellationToken token)
@@ -213,5 +203,16 @@ public class ProductRepository(AppDbContext db) : IProductRepository
     private IQueryable<Lesson> GetNonDeletedLessons()
     {
         return db.Lessons.Where(e => e.DeletedAt == null && e.Module.DeletedAt == null && e.Module.Product.DeletedAt == null);
+    }
+
+    private IQueryable<Product> GetActiveProducts()
+    {
+        var products = GetNonDeletedProducts();
+
+        return products.Where(e => e.Status == ProductStatus.Active &&
+            (e.Type == ProductType.PrivateSession ||
+            e.Type == ProductType.PreRecordedCourse ||
+            (e.LastScheduledAt != null && e.LastScheduledAt > DateTime.UtcNow))
+        );
     }
 }
