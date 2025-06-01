@@ -1,6 +1,7 @@
 using Learning.Features.Products.Contracts;
 using Learning.Features.Products.Services;
 using Learning.Infrastructure.Keycloak;
+using Learning.Shared.Pagination;
 
 namespace Learning.Features.Products;
 
@@ -34,6 +35,23 @@ public static class ProductApi
         .WithSummary("Retrieve Products")
         .WithDescription("Retrieves a list of products filtered by optional educator, category, or sub-category parameters, with pagination support using pageNumber and pageSize.")
         .Produces<IEnumerable<ProductSummaryResponse>>(StatusCodes.Status200OK)
+        .AllowAnonymous();
+
+        productGroup.MapGet("educator/{educatorId:guid}", async (
+            Guid educatorId,
+            string cursor,
+            CancellationToken token,
+            IProductReadService service,
+            int pageSize = 20) =>
+        {
+            var result = await service.GetEducatorProductsAsync(educatorId, cursor, pageSize, token);
+            return Results.Ok(result);
+        })
+        .WithName("GetEducatorProductsAsync")
+        .WithSummary("Retrieve Educator Products")
+        .WithDescription("Retrieves a list of products by educator id with cursor-based pagination")
+        .RequireAuthorization()
+        .Produces<CursorPagedResult<ProductSummaryResponse>>(StatusCodes.Status200OK)
         .AllowAnonymous();
 
         productGroup.MapGet("my", async (

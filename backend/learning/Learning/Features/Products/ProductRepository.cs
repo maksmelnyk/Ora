@@ -15,6 +15,13 @@ public interface IProductRepository
         int take,
         CancellationToken token
     );
+    Task<Product[]> GetEducatorProductsAsync(
+        Guid educatorId,
+        ProductStatus? status,
+        long? id,
+        int take,
+        CancellationToken token
+    );
     Task<Product[]> GetEnrolledProductsAsync(Guid userId, int skip, int take, CancellationToken token);
     Task<Product> GetProductByIdAsync(long id, bool withModules, CancellationToken token);
     Task<long[]> GetProductLessonIds(long id, CancellationToken token);
@@ -64,6 +71,25 @@ public class ProductRepository(AppDbContext db) : IProductRepository
         var items = await products.Skip(skip).Take(take).ToArrayAsync(token);
 
         return (items, totalItems);
+    }
+
+    public Task<Product[]> GetEducatorProductsAsync(
+        Guid educatorId,
+        ProductStatus? status,
+        long? id,
+        int take,
+        CancellationToken token
+    )
+    {
+        var products = GetNonDeletedProducts().Where(e => e.EducatorId == educatorId).Where(e => id == null || e.Id > id);
+
+        products = status != null ? products.Where(e => e.Status == status) : products.Where(
+            e => e.Type == ProductType.PrivateSession ||
+                e.Type == ProductType.PreRecordedCourse ||
+                (e.LastScheduledAt != null && e.LastScheduledAt > DateTime.UtcNow)
+        );
+
+        return products.OrderBy(e => e.Id).Take(take).ToArrayAsync(token);
     }
 
     public Task<Product[]> GetEnrolledProductsAsync(Guid userId, int skip, int take, CancellationToken token)

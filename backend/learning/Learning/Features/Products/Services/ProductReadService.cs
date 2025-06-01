@@ -4,7 +4,7 @@ using Learning.Features.Products.Contracts;
 using Learning.Features.Products.Entities;
 using Learning.Features.Profiles;
 using Learning.Infrastructure.Identity;
-using Learning.Shared;
+using Learning.Shared.Pagination;
 
 namespace Learning.Features.Products.Services;
 
@@ -16,6 +16,13 @@ public interface IProductReadService
         long? subCategoryId,
         int skip,
         int take,
+        CancellationToken token
+    );
+
+    Task<CursorPagedResult<ProductSummaryResponse>> GetEducatorProductsAsync(
+        Guid educatorId,
+        string cursor,
+        int pageSize,
         CancellationToken token
     );
 
@@ -84,6 +91,34 @@ public sealed class ProductReadService(
         }).ToArray();
 
         return new PagedResult<ProductSummaryResponse>(result, TotalItems, pageNumber, pageSize);
+    }
+
+    public async Task<CursorPagedResult<ProductSummaryResponse>> GetEducatorProductsAsync(
+        Guid educatorId,
+        string cursor,
+        int pageSize,
+        CancellationToken token
+    )
+    {
+        var userId = currentUser.GetUserIdOrNull();
+        ProductStatus? status = userId != null && educatorId == userId ? null : ProductStatus.Active;
+
+        var products = await productRepository.GetEducatorProductsAsync(
+            educatorId,
+            status,
+            cursor != null ? long.Parse(cursor) : null,
+            pageSize,
+            token
+        );
+        if (products.Length == 0)
+            return new CursorPagedResult<ProductSummaryResponse>();
+
+        var educator = await profileService.GetEducatorByIdAsync(educatorId, token) ?? new EducatorResponse(educatorId, default, default, default);
+
+        //TODO: replace random with real data
+        var result = products.Select(e => ProductMapper.ToProductSummary(e, educator, random)).ToArray();
+
+        return new CursorPagedResult<ProductSummaryResponse>(result, result.Last().Id.ToString(), pageSize);
     }
 
     public async Task<IEnumerable<ProductSummaryResponse>> GetEnrolledProductsAsync(int skip, int take, CancellationToken token)

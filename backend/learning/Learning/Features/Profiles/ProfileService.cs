@@ -5,6 +5,7 @@ namespace Learning.Features.Profiles;
 public interface IProfileService
 {
     Task<Dictionary<Guid, EducatorResponse>> GetEducatorsAsync(IEnumerable<Guid> ids, CancellationToken token);
+    Task<EducatorResponse> GetEducatorByIdAsync(Guid id, CancellationToken token);
     Task UpdateProfileAsync(ProfileSummary profile, CancellationToken token);
 }
 
@@ -15,6 +16,15 @@ public class ProfileService(IProfileRepository repo) : IProfileService
         var profiles = await repo.GetProfilesAsync(ids, token);
 
         return profiles.Select(e => new EducatorResponse(e.UserId, e.FirstName, e.LastName, e.ImageUrl)).ToDictionary(e => e.Id, e => e);
+    }
+
+    public async Task<EducatorResponse> GetEducatorByIdAsync(Guid id, CancellationToken token)
+    {
+        var profile = await repo.GetProfileAsync(id, token);
+        if (profile == null)
+            return null;
+
+        return new EducatorResponse(profile.UserId, profile.FirstName, profile.LastName, profile.ImageUrl);
     }
 
     public async Task UpdateProfileAsync(ProfileSummary profile, CancellationToken token)
