@@ -14,8 +14,10 @@ public static class ProductMapper
             product.EducatorId,
             product.Type,
             product.Status,
-            product.Title, product.
-            Description,
+            product.Level,
+            product.Title,
+            product.Description,
+            product.Language,
             product.ImageUrl,
             product.Price,
             product.PrivateSessionProduct?.DurationMin ?? product.GroupSessionProduct?.DurationMin,
@@ -33,9 +35,16 @@ public static class ProductMapper
             product.SubCategoryId,
             product.Type,
             product.Status,
+            product.Level,
             product.Title,
+            product.Objectives,
             product.Description,
+            product.Highlights,
+            product.Audience,
+            product.Requirements,
+            product.Language,
             product.ImageUrl,
+            product.VideoUrl,
             product.Price,
             product.PrivateSessionProduct?.DurationMin ?? product.GroupSessionProduct?.DurationMin,
             product.GroupSessionProduct?.MaxParticipants ?? product.OnlineCourseProduct?.MaxParticipants,
@@ -64,9 +73,16 @@ public static class ProductMapper
             SubCategoryId = request.SubCategoryId,
             Status = ProductStatus.Active,
             Type = request.Type,
+            Level = request.Level,
             Title = request.Title,
+            Objectives = request.Objectives,
             Description = request.Description,
+            Highlights = request.Highlights,
+            Audience = request.Audience,
+            Requirements = request.Requirements,
+            Language = request.Language,
             ImageUrl = request.ImageUrl,
+            VideoUrl = request.VideoUrl,
             Price = request.Price,
         };
 
@@ -126,9 +142,16 @@ public static class ProductMapper
     public static void MapToProduct(Product product, ProductUpdateRequest request)
     {
         product.SubCategoryId = request.SubCategoryId;
+        product.Level = request.Level;
         product.Title = request.Title;
+        product.Objectives = request.Objectives;
         product.Description = request.Description;
+        product.Highlights = request.Highlights;
+        product.Audience = request.Audience;
+        product.Requirements = request.Requirements;
+        product.Language = request.Language;
         product.ImageUrl = request.ImageUrl;
+        product.VideoUrl = request.VideoUrl;
         product.Price = request.Price;
 
         switch (product.Type)
