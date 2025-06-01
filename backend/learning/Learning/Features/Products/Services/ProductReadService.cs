@@ -11,9 +11,7 @@ namespace Learning.Features.Products.Services;
 public interface IProductReadService
 {
     Task<PagedResult<ProductSummaryResponse>> GetProductsAsync(
-        Guid? educatorId,
-        long? categoryId,
-        long? subCategoryId,
+        ProductFilter filter,
         int skip,
         int take,
         CancellationToken token
@@ -57,9 +55,7 @@ public sealed class ProductReadService(
     private static readonly Random random = new();
 
     public async Task<PagedResult<ProductSummaryResponse>> GetProductsAsync(
-        Guid? educatorId,
-        long? categoryId,
-        long? subCategoryId,
+        ProductFilter filter,
         int pageNumber,
         int pageSize,
         CancellationToken token
@@ -68,10 +64,8 @@ public sealed class ProductReadService(
         var userId = currentUser.GetUserIdOrNull();
 
         var (Items, TotalItems) = await productRepository.GetProductsAsync(
-            userId == null || userId != educatorId,
-            educatorId,
-            categoryId,
-            subCategoryId,
+            userId == null || userId != filter?.EducatorId,
+            filter,
             (pageNumber - 1) * pageSize,
             pageSize,
             token

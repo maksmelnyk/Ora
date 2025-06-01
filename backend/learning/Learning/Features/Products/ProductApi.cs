@@ -13,18 +13,14 @@ public static class ProductApi
             .WithTags("Products");
 
         productGroup.MapGet("", async (
-            Guid? educatorId,
-            long? categoryId,
-            long? subCategoryId,
+            [AsParameters] ProductFilter filter,
             CancellationToken token,
             IProductReadService service,
             int pageNumber = 1,
             int pageSize = 20) =>
         {
             var courses = await service.GetProductsAsync(
-                educatorId,
-                categoryId,
-                subCategoryId,
+                filter,
                 pageNumber,
                 pageSize,
                 token

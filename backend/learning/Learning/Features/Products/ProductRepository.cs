@@ -1,3 +1,4 @@
+using Learning.Features.Products.Contracts;
 using Learning.Features.Products.Entities;
 using Learning.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +9,7 @@ public interface IProductRepository
 {
     Task<(Product[] Items, int TotalItems)> GetProductsAsync(
         bool activeOnly,
-        Guid? educatorId,
-        long? categoryId,
-        long? subCategoryId,
+        ProductFilter filter,
         int skip,
         int take,
         CancellationToken token
@@ -41,9 +40,7 @@ public class ProductRepository(AppDbContext db) : IProductRepository
 {
     public async Task<(Product[] Items, int TotalItems)> GetProductsAsync(
         bool activeOnly,
-        Guid? educatorId,
-        long? categoryId,
-        long? subCategoryId,
+        ProductFilter filter,
         int skip,
         int take,
         CancellationToken token
@@ -51,14 +48,7 @@ public class ProductRepository(AppDbContext db) : IProductRepository
     {
         var products = activeOnly is true ? GetActiveProducts() : GetNonDeletedProducts();
 
-        if (educatorId.HasValue)
-            products = products.Where(e => e.EducatorId == educatorId.Value);
-
-        if (categoryId.HasValue)
-            products = products.Where(e => e.SubCategory.CategoryId == categoryId.Value);
-
-        if (subCategoryId.HasValue)
-            products = products.Where(e => e.SubCategoryId == subCategoryId.Value);
+        products = ApplyProductFilters(products, filter);
 
         var totalItems = await products.CountAsync(token);
         var items = await products.Skip(skip).Take(take).ToArrayAsync(token);
@@ -215,5 +205,37 @@ public class ProductRepository(AppDbContext db) : IProductRepository
             e.Type == ProductType.PreRecordedCourse ||
             (e.LastScheduledAt != null && e.LastScheduledAt > DateTime.UtcNow))
         );
+    }
+
+    private IQueryable<Product> ApplyProductFilters(IQueryable<Product> products, ProductFilter filter)
+    {
+        if (!string.IsNullOrWhiteSpace(filter.Title))
+            products = products.Where(e => e.Title.ToLower().Contains(filter.Title.ToLower()));
+
+        if (filter.Type.HasValue)
+            products = products.Where(e => e.Type == filter.Type.Value);
+
+        if (filter.EducatorId.HasValue)
+            products = products.Where(e => e.EducatorId == filter.EducatorId.Value);
+
+        if (filter.CategoryId.HasValue)
+            products = products.Where(e => e.SubCategory.CategoryId == filter.CategoryId.Value);
+
+        if (filter.SubCategoryId.HasValue)
+            products = products.Where(e => e.SubCategoryId == filter.SubCategoryId.Value);
+
+        if (filter.Level.HasValue)
+            products = products.Where(e => e.Level == filter.Level.Value);
+
+        if (!string.IsNullOrWhiteSpace(filter.Language))
+            products = products.Where(e => e.Language == filter.Language);
+
+        if (filter.MinPrice.HasValue)
+            products = products.Where(e => e.Price >= filter.MinPrice.Value);
+
+        if (filter.MaxPrice.HasValue)
+            products = products.Where(e => e.Price <= filter.MaxPrice.Value);
+
+        return products;
     }
 }
