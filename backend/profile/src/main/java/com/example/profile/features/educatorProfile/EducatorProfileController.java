@@ -37,6 +37,14 @@ public class EducatorProfileController {
         return ResponseEntity.ok(this.service.getEducatorProfiles(pageNumber, pageSize));
     }
 
+    @Operation(summary = "Retrieve Recommended Educator Profiles", description = "Retrieve a paginated list of recommended educator profiles.")
+    @GetMapping("/recommended")
+    public ResponseEntity<PagedResult<EducatorSummaryResponse>> getRecommendedEducatorProfiles(
+            @RequestParam(defaultValue = "1") int pageNumber,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        return ResponseEntity.ok(this.service.getRecommendedEducatorProfiles(pageNumber, pageSize));
+    }
+
     @Operation(summary = "Retrieve Educator Profile by ID", description = "Retrieve detailed information about an educator given their unique identifier.")
     @GetMapping("/{id}")
     public ResponseEntity<EducatorDetailsResponse> getEducatorProfileById(@PathVariable UUID id) {

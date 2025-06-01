@@ -54,6 +54,23 @@ public class EducatorProfileService {
                 educatorProfiles.getSize());
     }
 
+    public PagedResult<EducatorSummaryResponse> getRecommendedEducatorProfiles(int pageNumber, int pageSize) {
+        // TODO: update sorting
+        PageRequest pageable = PageRequest.of(pageNumber - 1, pageSize,
+                Sort.by(Sort.Order.desc("hasProduct"), Sort.Order.desc("createdDate")));
+
+        Page<EducatorProfile> educatorProfiles = this.repository.findByStatus(
+                EducatorVerificationStatus.APPROVED, pageable);
+
+        // TODO: replace random with real data
+        return new PagedResult<EducatorSummaryResponse>(
+                educatorProfiles.getContent().stream().map(m -> mapper.toEducatorSummary(m, random)).toList(),
+                educatorProfiles.getTotalPages(),
+                educatorProfiles.getTotalElements(),
+                pageNumber,
+                educatorProfiles.getSize());
+    }
+
     // TODO: replace random with real data
     public EducatorDetailsResponse getEducatorProfileById(UUID id) {
         return this.repository.findApprovedById(id)

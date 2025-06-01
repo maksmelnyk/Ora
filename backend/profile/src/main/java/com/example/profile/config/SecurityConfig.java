@@ -30,6 +30,7 @@ public class SecurityConfig {
                         // TODO: temporary allow OpenAPI docs APIs
                         .requestMatchers("/public/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/educators").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/educators/recommended").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/educators/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/profiles/{id}").permitAll()
                         .anyRequest().authenticated())
