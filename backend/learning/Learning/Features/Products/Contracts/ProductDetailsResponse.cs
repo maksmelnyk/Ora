@@ -19,6 +19,8 @@ public record ProductDetailsResponse(
     string ImageUrl,
     string VideoUrl,
     decimal Price,
+    double Rating,
+    int RatingCount,
     int? DurationMin,
     int? MaxParticipants,
     DateTime? StartDate,

@@ -15,6 +15,8 @@ public record ProductSummaryResponse(
     string Language,
     string ImageUrl,
     decimal Price,
+    double Rating,
+    int RatingCount,
     int? DurationMin,
     int? MaxParticipants,
     DateTime? StartDate,

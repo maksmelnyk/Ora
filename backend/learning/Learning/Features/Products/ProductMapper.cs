@@ -6,7 +6,8 @@ namespace Learning.Features.Products;
 
 public static class ProductMapper
 {
-    public static ProductSummaryResponse ToProductSummary(Product product, EducatorResponse educator)
+    //TODO: map real rating data 
+    public static ProductSummaryResponse ToProductSummary(Product product, EducatorResponse educator, Random random)
     {
         return new ProductSummaryResponse(
             product.Id,
@@ -20,6 +21,8 @@ public static class ProductMapper
             product.Language,
             product.ImageUrl,
             product.Price,
+            Math.Round(1.0 + (5.0 - 1.0) * random.NextDouble(), 1),
+            random.Next(1, 2000),
             product.PrivateSessionProduct?.DurationMin ?? product.GroupSessionProduct?.DurationMin,
             product.GroupSessionProduct?.MaxParticipants ?? product.OnlineCourseProduct?.MaxParticipants,
             product.OnlineCourseProduct?.StartTime,
@@ -28,7 +31,8 @@ public static class ProductMapper
         );
     }
 
-    public static ProductDetailsResponse ToProductDetails(Product product, EducatorResponse educator)
+    //TODO: map real rating data 
+    public static ProductDetailsResponse ToProductDetails(Product product, EducatorResponse educator, Random random)
     {
         return new ProductDetailsResponse(
             product.Id,
@@ -46,6 +50,8 @@ public static class ProductMapper
             product.ImageUrl,
             product.VideoUrl,
             product.Price,
+            Math.Round(1.0 + (5.0 - 1.0) * random.NextDouble(), 1),
+            random.Next(1, 2000),
             product.PrivateSessionProduct?.DurationMin ?? product.GroupSessionProduct?.DurationMin,
             product.GroupSessionProduct?.MaxParticipants ?? product.OnlineCourseProduct?.MaxParticipants,
             product.OnlineCourseProduct?.StartTime,

@@ -47,6 +47,8 @@ public sealed class ProductReadService(
     IProfileService profileService
     ) : IProductReadService
 {
+    private static readonly Random random = new();
+
     public async Task<PagedResult<ProductSummaryResponse>> GetProductsAsync(
         Guid? educatorId,
         long? categoryId,
@@ -77,7 +79,8 @@ public sealed class ProductReadService(
         var result = Items.Select(e =>
         {
             var educator = profiles.GetValueOrDefault(e.EducatorId, new EducatorResponse(e.EducatorId, default, default, default));
-            return ProductMapper.ToProductSummary(e, educator);
+            //TODO: replace random with real data
+            return ProductMapper.ToProductSummary(e, educator, random);
         }).ToArray();
 
         return new PagedResult<ProductSummaryResponse>(result, TotalItems, pageNumber, pageSize);
@@ -96,7 +99,9 @@ public sealed class ProductReadService(
         var result = products.Select(e =>
         {
             var educator = profiles.GetValueOrDefault(e.EducatorId, new EducatorResponse(e.EducatorId, default, default, default));
-            return ProductMapper.ToProductSummary(e, educator);
+
+            //TODO: replace random with real data
+            return ProductMapper.ToProductSummary(e, educator, random);
         });
 
         return result;
@@ -111,7 +116,9 @@ public sealed class ProductReadService(
         var profiles = await profileService.GetEducatorsAsync([product.EducatorId], token);
 
         var educator = profiles.GetValueOrDefault(product.EducatorId, new EducatorResponse(product.EducatorId, default, default, default));
-        var result = ProductMapper.ToProductDetails(product, educator);
+
+        //TODO: replace random with real data
+        var result = ProductMapper.ToProductDetails(product, educator, random);
         return result;
     }
 
