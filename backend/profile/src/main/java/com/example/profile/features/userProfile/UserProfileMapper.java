@@ -63,6 +63,7 @@ public class UserProfileMapper {
         target.setFirstName(source.firstName());
         target.setLastName(source.lastName());
         target.setImageUrl(source.imageUrl());
+        target.setBio(source.bio());
     }
 
     public EducatorProfileUpdatedEvent toProfileUpdatedEvent(UserProfile request) {
