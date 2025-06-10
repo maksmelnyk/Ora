@@ -25,9 +25,16 @@ create table if not exists product (
     sub_category_id     bigint          not null references sub_category(id),
     type                int             not null,
     status              int             not null,
+    level               int             not null,
     title               varchar(255)    not null,
+    objectives          varchar(2000),
     description         varchar(2000),
-    image_url           varchar(500),
+    highlights          varchar(2000),
+    audience            varchar(2000),
+    requirements        varchar(2000),
+    language            varchar(10),
+    image_url           varchar(200),
+    video_url           varchar(200),
     price               decimal(18,2)   not null,
     has_enrollment      boolean         not null,
     created_at          timestamptz     not null default current_timestamp,
@@ -76,8 +83,8 @@ create table if not exists lesson (
     description     varchar(2000),
     duration_min    int             not null,
     sort_order      int             not null,
-    created_at      timestamptz     not null,
-    updated_at      timestamptz     not null,
+    created_at      timestamptz     not null default current_timestamp,
+    updated_at      timestamptz     not null default current_timestamp,
     deleted_at      timestamptz,
     foreign key (module_id) references module (id) on delete cascade
 );
@@ -96,8 +103,9 @@ create index if not exists idx_product_not_deleted on product (id) where deleted
 create index if not exists idx_product_educator_id_not_deleted on product (educator_id) where deleted_at is null;
 create index if not exists idx_product_sub_category_id_not_deleted on product (sub_category_id) where deleted_at is null;
 create index if not exists idx_product_status_not_deleted on product (status) where deleted_at is null;
-create index if not exists idx_product_educator_status_not_deleted on product (educator_id, status) where deleted_at is null;
 create index if not exists idx_product_type_not_deleted on product (type) where deleted_at is null;
+create index if not exists idx_product_level_not_deleted on product (level) where deleted_at is null;
+create index if not exists idx_product_language_not_deleted on product (language) where deleted_at is null;
 create index if not exists idx_product_last_scheduled_at_not_deleted on product (last_scheduled_at) where deleted_at is null;
 
 create index if not exists idx_module_product_id_sort_order_not_deleted on module (product_id, sort_order) where deleted_at is null;
