@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=42dot+Sans:wght@300..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Ora Color System */
+  --color-ora-navy: #272a50;
+  --color-ora-blue: #6892fe;
+  --color-ora-teal: #52C2CC;
+  --color-ora-gray: #535863;
+  --color-ora-bg: #fafafa;
+  --color-ora-surface: #ffffff;
+  
+  /* Extended Palette */
+  --color-ora-orange: #ffb450;
+  --color-ora-purple: #9386f1;
+  --color-ora-cyan: #64c1f0;
+  
+  /* Semantic Colors */
+  --color-ora-highlight: #496fff;
+  --color-ora-success: #10b981;
+  --color-ora-warning: #f59e0b;
+  --color-ora-error: #ff7f66;
+  
+  /* Gray Scale */
+  --color-ora-gray-50: #f9fafb;
+  --color-ora-gray-100: #f3f4f6;
+  --color-ora-gray-200: #e5e7eb;
+  --color-ora-gray-300: #d1d5db;
+  
+  /* Typography */
+  --default-font-family: '42dot Sans', system-ui, -apple-system, sans-serif;
+  --font-family-heading: 'Instrument Sans', 'Inter', system-ui, sans-serif;
+  --font-family-body: '42dot Sans', system-ui, -apple-system, sans-serif;
+  --font-family-display: 'Instrument Sans', 'Inter', system-ui, sans-serif;
+  
+  /* Font Weights */
+  --font-weight-heading: 700;
+  --font-weight-subheading: 600;
+  --font-weight-body: 400;
+  --font-weight-emphasis: 500;
+  
+  /* Shadows */
+  --shadow-ora-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-ora-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-ora-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-ora-header: 0 4px 10px 0 rgba(40, 48, 80, 0.15);
+  
+  /* Border Radius */
+  --radius-ora-sm: 6px;
+  --radius-ora-md: 8px;
+  --radius-ora-lg: 12px;
+  --radius-ora-xl: 16px;
+  
+  /* Spacing Scale */
+  --spacing-ora-xs: 0.5rem;
+  --spacing-ora-sm: 0.75rem;
+  --spacing-ora-md: 1rem;
+  --spacing-ora-lg: 1.5rem;
+  --spacing-ora-xl: 2rem;
+  --spacing-ora-2xl: 3rem;
+  
+  /* Transition Duration */
+  --transition-duration-ora: 200ms;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-family-body);
+    color: var(--color-ora-gray);
+    background-color: var(--color-ora-bg);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family-heading);
+    color: var(--color-ora-navy);
+    font-weight: var(--font-weight-heading);
+  }
+}
+
+@layer utilities {
+  .ora-heading {
+    font-family: var(--font-family-heading);
+    color: var(--color-ora-navy);
+    font-weight: var(--font-weight-heading);
+  }
+  
+  .ora-subheading {
+    font-family: var(--font-family-heading);
+    color: var(--color-ora-navy);
+    font-weight: var(--font-weight-subheading);
+  }
+  
+  .ora-body {
+    font-family: var(--font-family-body);
+    color: var(--color-ora-gray);
+    font-weight: var(--font-weight-body);
+  }
+
+  .ora-footer {
+    font-family: var(--font-family-body);
+    color: var(--color-ora-gray-100);
+    font-weight: var(--font-weight-body);
+  }
+  
+  .ora-emphasis {
+    font-family: var(--font-family-body);
+    color: var(--color-ora-navy);
+    font-weight: var(--font-weight-emphasis);
+  }
+  
+  .ora-surface {
+    background-color: var(--color-ora-surface);
+    border-radius: var(--border-radius-ora-md);
+    box-shadow: var(--box-shadow-ora-sm);
+  }
+  
+  .ora-transition {
+    transition-duration: var(--transition-duration-ora);
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
