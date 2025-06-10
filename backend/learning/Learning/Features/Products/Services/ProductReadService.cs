@@ -109,7 +109,9 @@ public sealed class ProductReadService(
         //TODO: replace random with real data
         var result = products.Select(e => ProductMapper.ToProductSummary(e, educator, random)).ToArray();
 
-        return new CursorPagedResult<ProductSummaryResponse>(result, result.Last().Id.ToString(), pageSize);
+        var nextCursor = result.Length < pageSize ? null : result[^1].Id.ToString();
+
+        return new CursorPagedResult<ProductSummaryResponse>(result, nextCursor, pageSize);
     }
 
     public async Task<CursorPagedResult<ProductSummaryResponse>> GetEnrolledProductsAsync(
@@ -136,7 +138,9 @@ public sealed class ProductReadService(
             return ProductMapper.ToProductSummary(e, educator, random);
         }).ToArray();
 
-        return new CursorPagedResult<ProductSummaryResponse>(result, result.Last().Id.ToString(), pageSize);
+        var nextCursor = result.Length < pageSize ? null : result[^1].Id.ToString();
+
+        return new CursorPagedResult<ProductSummaryResponse>(result, nextCursor, pageSize);
     }
 
     public async Task<ProductDetailsResponse> GetProductDetailsAsync(long id, CancellationToken token)
