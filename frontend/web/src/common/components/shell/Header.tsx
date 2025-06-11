@@ -24,7 +24,11 @@ export const Header: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <Link to="/" className="flex items-center" aria-label="Home">
-                <span className="ora-heading text-xl">ORA</span>
+                <img
+                  src="/assets/images/logo.svg"
+                  alt="ORA"
+                  className="h-4 w-auto"
+                />
               </Link>
 
               <Link
