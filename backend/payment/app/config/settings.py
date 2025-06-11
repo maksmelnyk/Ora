@@ -22,12 +22,12 @@ def get_env_var(name: str, default: Union[str, int, float, bool]) -> Any:
 
 
 class AppSettings:
-    port: str = get_env_var(name="PAYMENT_PORT", default="8086")
-    host: str = get_env_var(name="PAYMENT_HOST", default="0.0.0.0")
     name: str = get_env_var(name="PAYMENT_NAME", default="payment-service")
     version: str = get_env_var(name="PAYMENT_VERSION", default="1.0.0")
+    port: str = get_env_var(name="PAYMENT_PORT", default="8086")
+    host: str = get_env_var(name="PAYMENT_HOST", default="0.0.0.0")
     debug: bool = get_env_var(name="PAYMENT_DEBUG", default=False)
-    allow_credentials: bool = get_env_var(name="ALLOW_CREDENTIALS", default=True)
+    allow_credentials: bool = get_env_var(name="ALLOWED_CREDENTIALS", default=True)
     allow_origins: list[str] = get_env_var("ALLOWED_ORIGINS", default="").split(",")
     allow_methods: list[str] = get_env_var("ALLOWED_METHODS", default="").split(",")
     allow_headers: list[str] = get_env_var("ALLOWED_HEADERS", default="").split(",")
