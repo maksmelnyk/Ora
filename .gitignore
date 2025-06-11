@@ -1,5 +1,6 @@
-*.ps1
 *.env*
 .vscode/
 nginx/certs/
 dev/
+open.ps1
+!.env.example
