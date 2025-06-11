@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/maksmelnyk/scheduling/internal/database"
 	"github.com/maksmelnyk/scheduling/internal/database/entities"
@@ -88,7 +89,7 @@ func (r *BookingRepo) GetLessonsScheduledEvents(ctx context.Context, lessonIds [
 		FROM scheduled_event
 		WHERE lesson_id = ANY($1)
 	`
-	return database.FetchMultiple[entities.ScheduledEvent](ctx, r.db, query, lessonIds)
+	return database.FetchMultiple[entities.ScheduledEvent](ctx, r.db, query, pq.Array(lessonIds))
 }
 
 func (r *BookingRepo) GetScheduledEventById(ctx context.Context, id int64) (*entities.ScheduledEvent, error) {
