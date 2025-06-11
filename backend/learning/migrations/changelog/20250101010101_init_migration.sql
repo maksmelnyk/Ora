@@ -92,7 +92,7 @@ create table if not exists lesson (
 create table if not exists enrollment (
     id                      bigint          generated always as identity primary key,
     product_id              bigint          not null    references product (id),
-    scheduled_event_id      bigint          not null,
+    scheduled_event_id      bigint,
     user_id                 uuid            not null,
     status                  int             not null,
     created_at              timestamptz     not null default current_timestamp,
