@@ -1,3 +1,53 @@
+x-envs:
+  origins-common: &origins-common
+    ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    ALLOWED_METHODS: ${ALLOWED_METHODS}
+    ALLOWED_HEADERS: ${ALLOWED_HEADERS}
+    ALLOWED_CREDENTIALS: ${ALLOWED_CREDENTIALS}
+
+  postgres-common: &postgres-common
+    POSTGRES_HOST: ${POSTGRES_HOST}
+    POSTGRES_PORT: ${POSTGRES_PORT}
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  keycloak-common: &keycloak-common
+    KEYCLOAK_URL: ${KEYCLOAK_URL}
+    KEYCLOAK_DB_NAME: ${KEYCLOAK_DB_NAME}
+    KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER}
+    KEYCLOAK_DB_PASS: ${KEYCLOAK_DB_PASS}
+    KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+    KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER}
+    KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
+    KEYCLOAK_JWKS_URI: ${KEYCLOAK_JWKS_URI}
+    KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+    KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+
+  rabbitmq-common: &rabbitmq-common
+    RABBITMQ_HOST: ${RABBITMQ_HOST}
+    RABBITMQ_VHOST: ${RABBITMQ_VHOST}
+    RABBITMQ_PORT: ${RABBITMQ_PORT}
+    RABBITMQ_USER: ${RABBITMQ_USER}
+    RABBITMQ_PASS: ${RABBITMQ_PASS}
+    RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
+    RABBITMQ_DLQ_EXCHANGE: ${RABBITMQ_DLQ_EXCHANGE}
+    RABBITMQ_MESSAGE_TTL: ${RABBITMQ_MESSAGE_TTL}
+
+  telemetry-common: &telemetry-common
+    PROMETHEUS_PORT: ${PROMETHEUS_PORT}
+    GRAFANA_PORT: ${GRAFANA_PORT}
+    GRAFANA_USER: ${GRAFANA_USER}
+    GRAFANA_PASSWORD: ${GRAFANA_PASSWORD}
+    OTEL_GRPC_URL: ${OTEL_GRPC_URL}
+
+  urls-common: &urls-common
+    AUTH_URL: ${AUTH_URL}
+    PROFILE_URL: ${PROFILE_URL}
+    LEARNING_URL: ${LEARNING_URL}
+    SCHEDULING_URL: ${SCHEDULING_URL}
+    PAYMENT_URL: ${PAYMENT_URL}
+
 services:
   postgres:
     container_name: pg_db
@@ -6,8 +56,16 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-13795}
-    env_file:
-      - .env.docker
+      KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER}
+      KEYCLOAK_DB_PASS: ${KEYCLOAK_DB_PASS}
+      PROFILE_DB_USER: ${PROFILE_DB_USER}
+      PROFILE_DB_PASS: ${PROFILE_DB_PASS}
+      LEARNING_DB_USER: ${LEARNING_DB_USER}
+      LEARNING_DB_PASS: ${LEARNING_DB_PASS}
+      SCHEDULING_DB_USER: ${SCHEDULING_DB_USER}
+      SCHEDULING_DB_PASS: ${SCHEDULING_DB_PASS}
+      PAYMENT_DB_USER: ${PAYMENT_DB_USER}
+      PAYMENT_DB_PASS: ${PAYMENT_DB_PASS}
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
@@ -56,8 +114,8 @@ services:
       KC_DB_URL_DATABASE: ${KEYCLOAK_DB_NAME:-keycloak}
       KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-13795}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
     command: [ "start-dev", "--import-realm" ]
     volumes:
       - ./configs/realm-config.json:/opt/keycloak/data/import/realm-config.json:ro
@@ -222,8 +280,10 @@ services:
     container_name: auth
     restart: unless-stopped
     build: ./backend/auth
-    env_file:
-      - .env.docker
+    environment:
+      <<: [ *origins-common, *rabbitmq-common, *keycloak-common ]
+      AUTH_PORT: ${AUTH_PORT}
+      AUTH_NAME: ${AUTH_NAME}
     depends_on:
       keycloak:
         condition: service_started
@@ -236,8 +296,18 @@ services:
     container_name: profile
     restart: unless-stopped
     build: ./backend/profile
-    env_file:
-      - .env.docker
+    environment:
+      <<: [ 
+        *origins-common,
+        *rabbitmq-common,
+        *keycloak-common,
+        *telemetry-common
+      ]
+      PROFILE_PORT: ${PROFILE_PORT}
+      PROFILE_NAME: ${PROFILE_NAME}
+      PROFILE_DB_URL: ${PROFILE_DB_URL}
+      PROFILE_DB_USER: ${PROFILE_DB_USER}
+      PROFILE_DB_PASS: ${PROFILE_DB_PASS}
     depends_on:
       keycloak:
         condition: service_started
@@ -252,8 +322,27 @@ services:
     container_name: learning
     restart: unless-stopped
     build: ./backend/learning
-    env_file:
-      - .env.docker
+    environment:
+      <<: [ 
+        *origins-common
+      ]
+      LEARNING_URL: ${LEARNING_URL}
+      LEARNING_NAME: ${LEARNING_NAME}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__DefaultConnection: ${LEARNING_DB_URL}
+      KeycloakOptions__Authority: ${KEYCLOAK_ISSUER_URI}
+      KeycloakOptions__Audience: ${KEYCLOAK_AUDIENCE}
+      KeycloakOptions__RoleAddress: ${KEYCLOAK_ROLE_ADDRESS}
+      KeycloakOptions__MetadataAddress: ${KEYCLOAK_METADATA_ADDRESS}
+      TelemetryOptions__OpenTelemetryEndpoint: ${OTEL_GRPC_URL}
+      RabbitMqOptions__HostName: ${RABBITMQ_HOST}
+      RabbitMqOptions__VirtualHost: ${RABBITMQ_VHOST}
+      RabbitMqOptions__Port: ${RABBITMQ_PORT}
+      RabbitMqOptions__UserName: ${RABBITMQ_USER}
+      RabbitMqOptions__Password: ${RABBITMQ_PASS}
+      RabbitMqOptions__Exchange: ${RABBITMQ_EXCHANGE}
+      RabbitMqOptions__DeadLetterExchange: ${RABBITMQ_DLQ_EXCHANGE}
+      RabbitMqOptions__MessageTtl: ${RABBITMQ_MESSAGE_TTL}
     depends_on:
       keycloak:
         condition: service_started
@@ -268,8 +357,22 @@ services:
     container_name: scheduling
     restart: unless-stopped
     build: ./backend/scheduling
-    env_file:
-      - .env.docker
+    environment:
+      <<: [ 
+        *origins-common,
+        *rabbitmq-common,
+        *keycloak-common,
+        *telemetry-common,
+        *urls-common
+      ]
+      SCHEDULING_PORT: ${SCHEDULING_PORT}
+      SCHEDULING_NAME: ${SCHEDULING_NAME}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DRIVER: ${POSTGRES_DRIVER}
+      SCHEDULING_DB_NAME: ${SCHEDULING_DB_NAME}
+      SCHEDULING_DB_USER: ${SCHEDULING_DB_USER}
+      SCHEDULING_DB_PASS: ${SCHEDULING_DB_PASS}
     depends_on:
       keycloak:
         condition: service_started
@@ -284,8 +387,17 @@ services:
     container_name: payment
     restart: unless-stopped
     build: ./backend/payment
-    env_file:
-      - .env.docker
+    environment:
+      <<: [ 
+        *origins-common,
+        *rabbitmq-common,
+        *keycloak-common,
+        *telemetry-common,
+        *urls-common
+      ]
+      PAYMENT_PORT: ${PAYMENT_PORT}
+      PAYMENT_NAME: ${PAYMENT_NAME}
+      PAYMENT_DB_URL: ${PAYMENT_DB_URL}
     depends_on:
       keycloak:
         condition: service_started
