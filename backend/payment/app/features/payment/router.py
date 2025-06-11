@@ -17,7 +17,6 @@ router = APIRouter()
     description="Retrieves a paginated list of payments for the currently authenticated user using the provided 'skip' and 'take' query parameters.",
 )
 async def get_my_payments(
-    request: Request,
     service: Annotated[PaymentService, Depends(dependency=get_payment_service)],
     skip: int = 0,
     take: int = 10,
@@ -28,7 +27,6 @@ async def get_my_payments(
 
 @router.post(
     path="/",
-    response_model=PaymentResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create Payment",
     description="Creates a new payment for the authenticated user",
