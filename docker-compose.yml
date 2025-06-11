@@ -414,8 +414,16 @@ services:
       context: ./frontend/web
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file:
-      - .env.docker
+    environment:
+      VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL}
+      VITE_PROFILE_SERVICE_URL: ${VITE_PROFILE_SERVICE_URL}
+      VITE_LEARNING_SERVICE_URL: ${VITE_LEARNING_SERVICE_URL}
+      VITE_SCHEDULING_SERVICE_URL: ${VITE_SCHEDULING_SERVICE_URL}
+      VITE_CHAT_SERVICE_URL: ${VITE_CHAT_SERVICE_URL}
+      VITE_PAYMENT_SERVICE_URL: ${VITE_PAYMENT_SERVICE_URL}
+      VITE_KEYCLOAK_BASE_URL: ${VITE_KEYCLOAK_BASE_URL}
+      VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM}
+      VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID}
     networks:
       - microservices-net
 
