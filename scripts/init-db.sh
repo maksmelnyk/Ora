@@ -14,9 +14,7 @@ required_vars=(
   SCHEDULING_DB_USER 
   SCHEDULING_DB_PASS 
   PAYMENT_DB_USER 
-  PAYMENT_DB_PASS 
-  CHAT_DB_USER 
-  CHAT_DB_PASS
+  PAYMENT_DB_PASS
 )
 
 for var in "${required_vars[@]}"; do
@@ -33,7 +31,6 @@ declare -A db_configs=(
   ["learning"]="${LEARNING_DB_USER}:${LEARNING_DB_PASS}"
   ["scheduling"]="${SCHEDULING_DB_USER}:${SCHEDULING_DB_PASS}"
   ["payment"]="${PAYMENT_DB_USER}:${PAYMENT_DB_PASS}"
-  ["chat"]="${CHAT_DB_USER}:${CHAT_DB_PASS}"
 )
 
 # --- Function: Create Role, Database, and Grant Privileges ---
