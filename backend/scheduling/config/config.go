@@ -128,10 +128,10 @@ func LoadConfig() Config {
 	postgresConfig := PostgresConfig{
 		Host:     GetEnvWithDefault("POSTGRES_HOST", "localhost"),
 		Port:     GetEnvWithDefault("POSTGRES_PORT", "5433"),
-		User:     GetEnvWithDefault("POSTGRES_USER", "postgres"),
-		Password: GetEnvWithDefault("POSTGRES_PASSWORD", ""),
 		PgDriver: GetEnvWithDefault("POSTGRES_DRIVER", ""),
 		DbName:   GetEnvWithDefault("SCHEDULING_DB_NAME", "scheduling"),
+		User:     GetEnvWithDefault("SCHEDULING_DB_USER", "postgres"),
+		Password: GetEnvWithDefault("SCHEDULING_DB_PASS", ""),
 	}
 
 	keycloakConfig := KeycloakConfig{
